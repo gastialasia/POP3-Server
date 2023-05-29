@@ -95,6 +95,11 @@ int handleTCPEchoClient(int clntSocket) {
 		return -1;   // TODO definir codigos de error
 	}
 
+	buffer[numBytesRcvd]=0;
+	if (strcmp(buffer,"test\n")==0){
+		printf("IGUALES!\n");
+	}
+
 	// Send received string and receive again until end of stream
 	while (numBytesRcvd > 0) { // 0 indicates end of stream
 		// Echo message back to client
