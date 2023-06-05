@@ -1,5 +1,5 @@
 /**
- * main.c - servidor proxy socks concurrente
+ * server.c - servidor proxy socks concurrente
  *
  * Interpreta los argumentos de línea de comandos, y monta un socket
  * pasivo.
@@ -23,7 +23,8 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
-#include "selector.h"
+#include "include/selector.h"
+#include "include/socks5nio.h"
 
 #define MAX_SOCKS 500
 
@@ -122,8 +123,7 @@ main(const int argc, const char **argv) {
         .handle_write      = NULL,
         .handle_close      = NULL, // nada que liberar
     };
-    ss = selector_register(selector, server, &socksv5,
-                                              OP_READ, NULL);
+    ss = selector_register(selector, server, &socksv5, OP_READ, NULL);
     if(ss != SELECTOR_SUCCESS) {
         err_msg = "registering fd";
         goto finally;

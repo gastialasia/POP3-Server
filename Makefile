@@ -1,18 +1,23 @@
-.PHONY=clean all
-COMPILER=gcc
-CFLAGS = -Wall -fsanitize=address -g
-all: addrinfo tcpEchoClient tcpEchoServer udpEchoServer udpEchoClient
-clean:	
-	- rm -f *.o  addrinfo tcpEchoclient tcpEchoServer udpEchoServer udpEchoClient
+include ./src/include/Makefile.inc
 
-COMMON =  logger.c util.c
-addrinfo:      
-	$(COMPILER) $(CFLAGS) -o addrinfo addrinfo.c $(COMMON) 
-tcpEchoClient:      
-	$(COMPILER) $(CFLAGS) -o tcpEchoClient tcpEchoClient.c tcpClientUtil.c $(COMMON)
-tcpEchoServer:      
-	$(COMPILER) $(CFLAGS) -o tcpEchoServer tcpEchoServer.c tcpServerUtil.c $(COMMON)
-udpEchoServer:      
-	$(COMPILER) $(CFLAGS) -o udpEchoServer udpEchoServer.c $(COMMON)
-udpEchoClient:
-	$(COMPILER) $(CFLAGS) -o udpEchoClient udpEchoClient.c $(COMMON)
+SOURCES_CLIENT := $(wildcard ./src/client/*.c)
+SOURCES_SERVER := $(wildcard ./src/server/*.c)
+SOURCES_COMMON := $(wildcard ./src/utils/*.c)
+
+OBJECTS_CLIENT := ./src/$(TARGET_CLIENT).o $(SOURCES_CLIENT:.c=.o)
+OBJECTS_SERVER := ./src/server.o $(SOURCES_SERVER:.c=.o)
+OBJECTS_COMMON := $(SOURCES_COMMON:.c=.o)
+OBJECTS = $(OBJECTS_SERVER) $(OBJECTS_CLIENT) $(OBJECTS_COMMON)
+
+all: $(TARGET_SERVER) $(TARGET_CLIENT)
+
+$(TARGET_CLIENT): $(OBJECTS_CLIENT) $(OBJECTS_COMMON)
+	$(CC) $(CFLAGS) $^ -o $@
+
+$(TARGET_SERVER): $(OBJECTS_SERVER) $(OBJECTS_COMMON)
+	$(CC) $(CFLAGS) $^ -o $@
+
+clean:
+	rm -rf $(OBJECTS) $(TARGET_SERVER) $(TARGET_CLIENT)
+
+.PHONY: all clean
