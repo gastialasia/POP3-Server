@@ -24,7 +24,7 @@
 #include <netinet/tcp.h>
 
 #include "include/selector.h"
-#include "include/socks5nio.h"
+#include "include/pop3nio.h"
 
 #define MAX_SOCKS 500
 
@@ -118,12 +118,12 @@ main(const int argc, const char **argv) {
         err_msg = "unable to create selector";
         goto finally;
     }
-    const struct fd_handler socksv5 = {
-        .handle_read       = socksv5_passive_accept,
+    const struct fd_handler pop3 = {
+        .handle_read       = pop3_passive_accept,
         .handle_write      = NULL,
         .handle_close      = NULL, // nada que liberar
     };
-    ss = selector_register(selector, server, &socksv5, OP_READ, NULL);
+    ss = selector_register(selector, server, &pop3, OP_READ, NULL);
     if(ss != SELECTOR_SUCCESS) {
         err_msg = "registering fd";
         goto finally;
@@ -157,7 +157,7 @@ finally:
     }
     selector_close();
 
-    socksv5_pool_destroy();
+    //pop3_pool_destroy();
 
     if(server >= 0) {
         close(server);

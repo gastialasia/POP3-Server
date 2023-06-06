@@ -2,6 +2,7 @@
     "files.associations": {
         "buffer.h": "c",
         "netutils.h": "c",
-        "socks5nio.h": "c"
+        "socks5nio.h": "c",
+        "selector.h": "c"
     }
 }

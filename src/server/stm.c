@@ -3,7 +3,7 @@
  *         del selector.c
  */
 #include <stdlib.h>
-#include "stm.h"
+#include "../include/stm.h"
 
 #define N(x) (sizeof(x)/sizeof((x)[0]))
 
@@ -26,7 +26,7 @@ stm_init(struct state_machine *stm) {
 inline static void
 handle_first(struct state_machine *stm, struct selector_key *key) {
     if(stm->current == NULL) {
-        stm->current = stm->states + stm->initial;
+        stm->current = stm->states + stm->initial; //stm->states[initial]
         if(NULL != stm->current->on_arrival) {
             stm->current->on_arrival(stm->current->state, key);
         }
@@ -38,11 +38,11 @@ void jump(struct state_machine *stm, unsigned next, struct selector_key *key) {
     if(next > stm->max_state) {
         abort();
     }
-    if(stm->current != stm->states + next) {
+    if(stm->current != stm->states + next) { //stm->states[next]
         if(stm->current != NULL && stm->current->on_departure != NULL) {
-            stm->current->on_departure(stm->current->state, key);
+            stm->current->on_departure(stm->current->state, key); //quizas quiero liberar recursos
         }
-        stm->current = stm->states + next;
+        stm->current = stm->states + next;  //stm->current = stm->states[next]
 
         if(NULL != stm->current->on_arrival) {
             stm->current->on_arrival(stm->current->state, key);
