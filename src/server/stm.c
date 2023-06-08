@@ -4,11 +4,13 @@
  */
 #include <stdlib.h>
 #include "../include/stm.h"
+#include <stdio.h>
 
 #define N(x) (sizeof(x)/sizeof((x)[0]))
 
 void
 stm_init(struct state_machine *stm) {
+    
     // verificamos que los estados son correlativos, y que están bien asignados.
     for(unsigned i = 0 ; i <= stm->max_state; i++) {
         if(i != stm->states[i].state) {

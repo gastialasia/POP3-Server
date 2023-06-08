@@ -73,16 +73,16 @@ enum pop3state
      */
     HELLO_WRITE,
 
-    AUTH_READ,
+    /*AUTH_READ,
 
     AUTH_WRITE,
 
     TRANSACTION_READ,
 
     TRANSACTION_WRITE,
-
-    UPDATE_WRITE,
-
+    
+    UPDATE_WRITE,*/
+    
     // estados terminales
     DONE,
     ERROR,
@@ -159,7 +159,7 @@ hello_read_init(const unsigned state, struct selector_key *key)
     d->parser.on_authentication_method = on_hello_method, hello_parser_init(&d->parser);
 }
 
-static void hello_salute(const unsigned state,  struct selector_key *key){
+static void hello_salute(const unsigned state, struct selector_key *key){
     printf("estoy en la funcion de hello\n");
 }
 
@@ -203,6 +203,24 @@ static unsigned hello_read(struct selector_key *key)
 static const struct state_definition client_statbl[] = {
     {
         .state = HELLO_READ,
+        .on_arrival = hello_read_init,
+        .on_departure = hello_salute,
+        .on_read_ready = hello_read,
+    },
+    {
+        .state = HELLO_WRITE,
+        .on_arrival = hello_read_init,
+        .on_departure = hello_salute,
+        .on_read_ready = hello_read,
+    },
+    {
+        .state = DONE,
+        .on_arrival = hello_read_init,
+        .on_departure = hello_salute,
+        .on_read_ready = hello_read,
+    },
+    {
+        .state = ERROR,
         .on_arrival = hello_read_init,
         .on_departure = hello_salute,
         .on_read_ready = hello_read,
@@ -291,8 +309,6 @@ fail:
     }
     //pop3_destroy(state);
 }
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // HELLO
