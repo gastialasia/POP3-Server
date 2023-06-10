@@ -20,11 +20,9 @@
 struct parser_event
 {
     /** tipo de evento */
-    unsigned type;
-    /** caracteres asociados al evento */
-    uint8_t data[3];
-    /** cantidad de datos en el buffer `data' */
-    uint8_t n;
+    unsigned type; //No sabemos si sirve o no, todavia no lo usamos.
+    char * commands[3]; //->Comando y 2 argumentos
+    int index; //Alcanza para el max que es 40 caracteres por argumento.
 
     /** lista de eventos: si es diferente de null ocurrieron varios eventos */
     struct parser_event *next;
