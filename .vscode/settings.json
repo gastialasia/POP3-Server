@@ -3,6 +3,9 @@
         "buffer.h": "c",
         "netutils.h": "c",
         "socks5nio.h": "c",
-        "selector.h": "c"
+        "selector.h": "c",
+        "limits": "c",
+        "new": "c",
+        "type_traits": "c"
     }
 }
