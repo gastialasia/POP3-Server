@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 
 #include "../include/hello.h"
+#include "../include/auth.h"
 // #include "request.h"
 #include "../include/buffer.h"
 
@@ -33,12 +34,21 @@ struct hello_st
     buffer *rb, *wb;
     struct hello_parser parser;
     /** el método de autenticación seleccionado */
-    uint8_t               method;
+    uint8_t method;
+};
+
+/** usado por HELLO_READ, HELLO_WRITE */
+struct auth_st
+{
+    /** buffer utilizado para I/O */
+    buffer *rb, *wb;
+    struct auth_parser parser;
+    char* user;
+    char* pass;
 };
 
 //Prototipos
-static void on_hello_method(struct hello_parser *p, const uint8_t method);
-static unsigned int hello_process(const struct hello_st *d);
+static unsigned int auth_process(const struct auth_st *d);
 
 // Variable globales
 static unsigned int connections = 0; // live qty of connections
@@ -59,8 +69,7 @@ enum pop3state
      *   - ERROR       ante cualquier error (IO/parseo)
      */
     HELLO_READ,
-
-    /**
+     /*
      * envía la respuesta del `hello' al cliente.
      *
      * Intereses:
@@ -73,7 +82,7 @@ enum pop3state
      */
     HELLO_WRITE,
 
-    /*AUTH_READ,
+    AUTH_READ,
 
     AUTH_WRITE,
 
@@ -81,7 +90,7 @@ enum pop3state
 
     TRANSACTION_WRITE,
     
-    UPDATE_WRITE,*/
+    UPDATE_WRITE,
     
     // estados terminales
     DONE,
@@ -114,12 +123,14 @@ struct pop3
     union
     {
         struct hello_st hello;
+        struct auth_st auth;
     } client;
 };
 
 /** realmente destruye */
 static void pop3_destroy(struct pop3 *s)
 {
+    //Liberar cada cliente
     //liberar bien todos los recursos
     free(s);
     connections--;
@@ -157,6 +168,17 @@ hello_read_init(const unsigned state, struct selector_key *key)
     d->wb = &(ATTACHMENT(key)->write_buffer);
     d->parser.data = &d->method;
     d->parser.on_authentication_method = on_hello_method, hello_parser_init(&d->parser);
+}
+
+/** inicializa las variables de los estados HELLO_… */
+static void
+auth_read_init(const unsigned state, struct selector_key *key)
+{
+    struct auth_st *d = &ATTACHMENT(key)->client.auth;
+
+    d->rb = &(ATTACHMENT(key)->read_buffer);
+    d->wb = &(ATTACHMENT(key)->write_buffer);
+    auth_parser_init(&d->parser);
 }
 
 static void hello_salute(const unsigned state, struct selector_key *key){
@@ -199,13 +221,49 @@ static unsigned hello_read(struct selector_key *key)
     return error ? ERROR : ret;
 }
 
+/** lee todos los bytes del mensaje de tipo `hello' y inicia su proceso */
+static unsigned auth_read(struct selector_key *key)
+{
+    struct auth_st *d = &ATTACHMENT(key)->client.auth;
+    unsigned ret = AUTH_READ;
+    bool error = false;
+    uint8_t *ptr;
+    size_t count;
+    ssize_t n;
+
+    ptr = buffer_write_ptr(d->rb, &count);
+    n = recv(key->fd, ptr, count, 0);
+    if (n > 0)
+    {
+        buffer_write_adv(d->rb, n);
+        const enum auth_state st = auth_consume(d->rb, &d->parser, &error);
+        if (auth_is_done(st, 0))
+        {
+            if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE))
+            {
+                ret = auth_process(d);
+            }
+            else
+            {
+                ret = ERROR;
+            }
+        }
+    }
+    else
+    {
+        ret = ERROR;
+    }
+
+    return error ? ERROR : ret;
+}
+
 /** definición de handlers para cada estado */
 static const struct state_definition client_statbl[] = {
     {
         .state = HELLO_READ,
         .on_arrival = hello_read_init,
         .on_departure = hello_salute,
-        .on_read_ready = hello_read,
+        .on_read_ready =  ,
     },
     {
         .state = HELLO_WRITE,

@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <../include/parser.h>
-#include "../include/parser_declaration.h"
+#include "../include/tokenizer.h"
 
 struct parser *create_parser()
 {
