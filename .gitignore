@@ -52,4 +52,5 @@ Mkfile.old
 dkms.conf
 
 tcpEchoServer
-.vscode/settings.json
+pop3
+.vscode/*
