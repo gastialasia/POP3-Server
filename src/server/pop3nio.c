@@ -21,6 +21,10 @@
 #include "../include/pop3nio.h"
 #include "../include/netutils.h"
 
+#include "../include/parser.h"
+
+
+
 #define N(x) (sizeof(x) / sizeof((x)[0]))
 #define BUFFER_SIZE 1024
 
@@ -37,18 +41,13 @@ struct hello_st
     uint8_t method;
 };
 
-/** usado por HELLO_READ, HELLO_WRITE */
 struct auth_st
 {
     /** buffer utilizado para I/O */
     buffer *rb, *wb;
-    struct auth_parser parser;
-    char* user;
-    char* pass;
-};
+    struct parser * parser;
 
-//Prototipos
-static unsigned int auth_process(const struct auth_st *d);
+};
 
 // Variable globales
 static unsigned int connections = 0; // live qty of connections
@@ -57,41 +56,11 @@ static struct pop3 *head_connection = NULL;
 /** maquina de estados general */
 enum pop3state
 {
-    /**
-     * recibe el mensaje `hello` del cliente, y lo procesa
-     *
-     * Intereses:
-     *     - OP_READ sobre client_fd
-     *
-     * Transiciones:
-     *   - HELLO_READ  mientras el mensaje no esté completo
-     *   - HELLO_WRITE cuando está completo
-     *   - ERROR       ante cualquier error (IO/parseo)
-     */
-    HELLO_READ,
-     /*
-     * envía la respuesta del `hello' al cliente.
-     *
-     * Intereses:
-     *     - OP_WRITE sobre client_fd
-     *
-     * Transiciones:
-     *   - HELLO_WRITE  mientras queden bytes por enviar
-     *   - REQUEST_READ cuando se enviaron todos los bytes
-     *   - ERROR        ante cualquier error (IO/parseo)
-     */
-    HELLO_WRITE,
 
-    AUTH_READ,
-
-    AUTH_WRITE,
-
-    TRANSACTION_READ,
-
-    TRANSACTION_WRITE,
-    
-    UPDATE_WRITE,
-    
+    AUTH_NO_USER, //Se mueve a AUTH_NO_USER, AUTH_NO_PASS o ERROR
+    AUTH_NO_PASS, // Se mueve a TRANSACTION, AUTH_NO_PASS o ERROR
+    TRANSACTION, // Se mueve a QUIT, ERROR o TRANSACTION
+    UPDATE,
     // estados terminales
     DONE,
     ERROR,
@@ -123,7 +92,8 @@ struct pop3
     union
     {
         struct hello_st hello;
-        struct auth_st auth;
+        struct auth_st auth_no_user;
+        struct auth_st auth_no_pass;
     } client;
 };
 
@@ -170,20 +140,15 @@ hello_read_init(const unsigned state, struct selector_key *key)
     d->parser.on_authentication_method = on_hello_method, hello_parser_init(&d->parser);
 }
 
-/** inicializa las variables de los estados HELLO_… */
 static void
-auth_read_init(const unsigned state, struct selector_key *key)
+auth_parser_init(const unsigned state, struct selector_key *key)
 {
-    struct auth_st *d = &ATTACHMENT(key)->client.auth;
-
+    struct auth_st *d = &ATTACHMENT(key)->client.auth_no_user;
     d->rb = &(ATTACHMENT(key)->read_buffer);
     d->wb = &(ATTACHMENT(key)->write_buffer);
-    auth_parser_init(&d->parser);
+    d->parser = create_parser(); //Inicializo nuestro tokenizer
 }
 
-static void hello_salute(const unsigned state, struct selector_key *key){
-    printf("estoy en la funcion de hello\n");
-}
 
 /** lee todos los bytes del mensaje de tipo `hello' y inicia su proceso */
 static unsigned hello_read(struct selector_key *key)
@@ -221,11 +186,10 @@ static unsigned hello_read(struct selector_key *key)
     return error ? ERROR : ret;
 }
 
-/** lee todos los bytes del mensaje de tipo `hello' y inicia su proceso */
-static unsigned auth_read(struct selector_key *key)
+static unsigned auth_no_user_read(struct selector_key *key)
 {
-    struct auth_st *d = &ATTACHMENT(key)->client.auth;
-    unsigned ret = AUTH_READ;
+    struct auth_st *d = &ATTACHMENT(key)->client.auth_no_user;
+    unsigned ret = AUTH_NO_USER;
     bool error = false;
     uint8_t *ptr;
     size_t count;
@@ -236,12 +200,21 @@ static unsigned auth_read(struct selector_key *key)
     if (n > 0)
     {
         buffer_write_adv(d->rb, n);
-        const enum auth_state st = auth_consume(d->rb, &d->parser, &error);
-        if (auth_is_done(st, 0))
+
+        while(buffer_can_read(d->rb)) {
+        const uint8_t c = buffer_read(d->rb);
+        st = hello_parser_feed(p, c);
+        if (hello_is_done(st, errored)) {
+            break;
+        }
+
+    }
+        //const enum auth_state st = hello_consume(d->rb, &d->parser, &error);
+        if (hello_is_done(st, 0))
         {
             if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE))
             {
-                ret = auth_process(d);
+                ret = hello_process(d);
             }
             else
             {
@@ -257,31 +230,45 @@ static unsigned auth_read(struct selector_key *key)
     return error ? ERROR : ret;
 }
 
+void empty_function(){
+
+}
+
+
+
 /** definición de handlers para cada estado */
 static const struct state_definition client_statbl[] = {
     {
-        .state = HELLO_READ,
-        .on_arrival = hello_read_init,
-        .on_departure = hello_salute,
-        .on_read_ready =  ,
+        .state = AUTH_NO_USER,
+        .on_arrival = auth_parser_init, //Inicializar los parsers
+        .on_read_ready = auth_no_user_read, //Se hace la lectura
+        .on_write_ready = auth_no_user_write,
     },
     {
-        .state = HELLO_WRITE,
-        .on_arrival = hello_read_init,
-        .on_departure = hello_salute,
-        .on_read_ready = hello_read,
+        .state = AUTH_NO_PASS,
+        .on_departure = empty_function, //Aca habria que llamar a auth_parser_close
+        .on_read_ready = empty_function,
+        .on_write_ready = empty_function,
     },
     {
-        .state = DONE,
-        .on_arrival = hello_read_init,
-        .on_departure = hello_salute,
-        .on_read_ready = hello_read,
+        .state = TRANSACTION,
+        .on_arrival = empty_function,
+        .on_departure = empty_function,
+        .on_read_ready = empty_function,
+        .on_write_ready = empty_function,
+    },
+    {
+        .state = UPDATE,
+        .on_arrival = empty_function,
+        .on_departure = empty_function,
+        .on_read_ready = empty_function,
+        .on_write_ready = empty_function,
     },
     {
         .state = ERROR,
-        .on_arrival = hello_read_init,
-        .on_departure = hello_salute,
-        .on_read_ready = hello_read,
+        .on_arrival = empty_function,
+        .on_departure = empty_function,
+        .on_read_ready = empty_function,
     },
 };
 
@@ -316,7 +303,7 @@ static struct pop3 *pop3_new(int client_fd)
     ret->client_fd = client_fd;
     ret->client_addr_len = sizeof(ret->client_addr);
 
-    ret->stm.initial = HELLO_READ;
+    ret->stm.initial = AUTH_NO_USER;
     ret->stm.max_state = ERROR;
     ret->stm.states = pop3_describe_states();
     stm_init(&ret->stm);
@@ -391,7 +378,7 @@ hello_process(const struct hello_st *d);
 static unsigned
 hello_process(const struct hello_st *d)
 {
-    unsigned ret = HELLO_WRITE;
+    unsigned ret = HELLE;
 
     uint8_t m = d->method;
     const uint8_t r = (m == SOCKS_HELLO_NO_ACCEPTABLE_METHODS) ? 0xFF : 0x00;
