@@ -1,12 +1,10 @@
 //Parser tokenizer: es responsable de consumir la entrada y separarla en un array [comando, argumento1, argumento2]
 
-#include <stdio.h>
-#include <../include/parser.h>
 #include "../include/tokenizer.h"
 
 struct parser *create_parser()
 {
-    int *transition_qty = malloc(sizeof(int) * STATEQTY);                                                  // Cant de transiciones por cada nodo.
+    size_t *transition_qty = malloc(sizeof(size_t) * STATEQTY);                                                  // Cant de transiciones por cada nodo.
     struct parser_state_transition **states = malloc(sizeof(struct parser_state_transition *) * STATEQTY); // Lista de nodos
 
     // COMANDO
@@ -72,6 +70,27 @@ struct parser *create_parser()
     second_arg[2].dest = SECOND_ARG_STATE;
     second_arg[2].act1 = &store_second_arg;
 
+    // FINAL STATE
+
+    transition_qty[FINAL_STATE] = 3;
+    struct parser_state_transition *final_state = malloc(sizeof(struct parser_state_transition) * 3); // Lista de transiciones del nodo
+    states[FINAL_STATE] = final_state;
+
+    // Si hay un salto de linea, termine de parsear la linea
+    final_state[0].when = '\n';
+    final_state[0].dest = COMMAND_STATE;
+    final_state[0].act1 = &completed;
+
+    // Si hay un /r, termino
+    final_state[1].when = '\r';
+    final_state[1].dest = FINAL_STATE;
+    final_state[1].act1 = NULL;
+
+    // Si es cualquier caracter, lo escribo en el array de comandos
+    final_state[2].when = ANY;
+    final_state[2].dest = ERR0R_STATE;
+    final_state[2].act1 = NULL;
+
     // ESTADO DE ERROR
 
     transition_qty[ERR0R_STATE] = 2;
@@ -96,6 +115,11 @@ struct parser *create_parser()
     };
 
     return parser_init(parser_no_classes(), &parser_definition);
+}
+
+void completed(struct parser_event *event, const uint8_t c){
+    event->complete = 1; //true
+    event->index = 0;
 }
 
 void restart_index(struct parser_event *event, const uint8_t c)

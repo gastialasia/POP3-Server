@@ -19,10 +19,9 @@
  */
 struct parser_event
 {
-    /** tipo de evento */
-    unsigned type; //No sabemos si sirve o no, todavia no lo usamos.
-    char* commands[3]; //->Comando y 2 argumentos
+    char * commands[3]; //->Comando y 2 argumentos
     int index; //Alcanza para el max que es 40 caracteres por argumento.
+    uint8_t complete; //Marca si llegamos al estado final
 
     /** lista de eventos: si es diferente de null ocurrieron varios eventos */
     struct parser_event *next;
@@ -32,13 +31,11 @@ struct parser_event
 struct parser_state_transition
 {
     /* condición: un caracter o una clase de caracter. Por ej: '\r' */
-    int when;
+    unsigned when;
     /** descriptor del estado destino cuando se cumple la condición */
     unsigned dest;
     /** acción 1 que se ejecuta cuando la condición es verdadera. requerida. */
     void (*act1)(struct parser_event *ret, const uint8_t c);
-    /** otra acción opcional */
-    void (*act2)(struct parser_event *ret, const uint8_t c);
 };
 
 /** predicado para utilizar en `when' que retorna siempre true */
@@ -50,9 +47,9 @@ struct parser_definition
     /** cantidad de estados */
     const unsigned states_count;
     /** por cada estado, sus transiciones */
-    const struct parser_state_transition **states;
+    struct parser_state_transition **states;
     /** cantidad de estados por transición */
-    const size_t *states_n;
+    size_t *states_n;
 
     /** estado inicial */
     const unsigned start_state;
@@ -78,7 +75,7 @@ void parser_reset(struct parser *p);
  * de parsing. Los eventos son reusado entre llamadas por lo que si se desea
  * capturar los datos se debe clonar.
  */
-const struct parser_event *
+struct parser_event *
 parser_feed(struct parser *p, const uint8_t c);
 
 /**

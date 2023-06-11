@@ -9,7 +9,7 @@ typedef struct{
     void* command_handler;
 } command_type;
 
-static command_type auth_commands[AUTH_COMMAND_QTY] = {
+/*static command_type auth_commands[AUTH_COMMAND_QTY] = {
     {.command_id = 'CAPA', .command_handler = &handler_capa},
     {.command_id = 'USER', .command_handler = &handler_user},
     {.command_id = 'PASS', .command_handler = &handler_pass},
@@ -18,4 +18,4 @@ static command_type auth_commands[AUTH_COMMAND_QTY] = {
 
 bool match_command(char** commands, pop3state){
 
-}
+}*/

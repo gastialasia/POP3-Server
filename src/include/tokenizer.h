@@ -1,6 +1,11 @@
 #ifndef PARSER_DECLARATION
 #define PARSER_DECLARATION
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "parser.h"
+
 // Los estados son los nodos del automata
 enum states
 {
@@ -14,6 +19,8 @@ enum states
 #define STATEQTY 5
 
 struct parser *create_parser();
+
+void completed(struct parser_event *event, const uint8_t c);
 
 void restart_index(struct parser_event *event, const uint8_t c);
 

@@ -13,8 +13,6 @@
 #include <arpa/inet.h>
 
 #include "../include/hello.h"
-#include "../include/auth.h"
-// #include "request.h"
 #include "../include/buffer.h"
 
 #include "../include/stm.h"
@@ -22,6 +20,7 @@
 #include "../include/netutils.h"
 
 #include "../include/parser.h"
+#include "../include/tokenizer.h"
 
 
 
@@ -56,7 +55,6 @@ static struct pop3 *head_connection = NULL;
 /** maquina de estados general */
 enum pop3state
 {
-
     AUTH_NO_USER, //Se mueve a AUTH_NO_USER, AUTH_NO_PASS o ERROR
     AUTH_NO_PASS, // Se mueve a TRANSACTION, AUTH_NO_PASS o ERROR
     TRANSACTION, // Se mueve a QUIT, ERROR o TRANSACTION
@@ -128,18 +126,6 @@ static const struct fd_handler pop3_handler = {
     .handle_block = pop3_block,
 };
 
-/** inicializa las variables de los estados HELLO_… */
-static void
-hello_read_init(const unsigned state, struct selector_key *key)
-{
-    struct hello_st *d = &ATTACHMENT(key)->client.hello;
-
-    d->rb = &(ATTACHMENT(key)->read_buffer);
-    d->wb = &(ATTACHMENT(key)->write_buffer);
-    d->parser.data = &d->method;
-    d->parser.on_authentication_method = on_hello_method, hello_parser_init(&d->parser);
-}
-
 static void
 auth_parser_init(const unsigned state, struct selector_key *key)
 {
@@ -147,43 +133,6 @@ auth_parser_init(const unsigned state, struct selector_key *key)
     d->rb = &(ATTACHMENT(key)->read_buffer);
     d->wb = &(ATTACHMENT(key)->write_buffer);
     d->parser = create_parser(); //Inicializo nuestro tokenizer
-}
-
-
-/** lee todos los bytes del mensaje de tipo `hello' y inicia su proceso */
-static unsigned hello_read(struct selector_key *key)
-{
-    struct hello_st *d = &ATTACHMENT(key)->client.hello;
-    unsigned ret = HELLO_READ;
-    bool error = false;
-    uint8_t *ptr;
-    size_t count;
-    ssize_t n;
-
-    ptr = buffer_write_ptr(d->rb, &count);
-    n = recv(key->fd, ptr, count, 0);
-    if (n > 0)
-    {
-        buffer_write_adv(d->rb, n);
-        const enum hello_state st = hello_consume(d->rb, &d->parser, &error);
-        if (hello_is_done(st, 0))
-        {
-            if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE))
-            {
-                ret = hello_process(d);
-            }
-            else
-            {
-                ret = ERROR;
-            }
-        }
-    }
-    else
-    {
-        ret = ERROR;
-    }
-
-    return error ? ERROR : ret;
 }
 
 static unsigned auth_no_user_read(struct selector_key *key)
@@ -197,19 +146,22 @@ static unsigned auth_no_user_read(struct selector_key *key)
 
     ptr = buffer_write_ptr(d->rb, &count);
     n = recv(key->fd, ptr, count, 0);
+    printf("%s\n", ptr);
+    printf("%ld", n);
     if (n > 0)
     {
         buffer_write_adv(d->rb, n);
-
+        buffer_read_adv(d->rb, n);
         while(buffer_can_read(d->rb)) {
-        const uint8_t c = buffer_read(d->rb);
-        st = hello_parser_feed(p, c);
-        if (hello_is_done(st, errored)) {
-            break;
+            const uint8_t c = buffer_read(d->rb);
+            struct parser_event * pe = parser_feed(d->parser, c);
+            //funcion para fijarnos si termino de pasear
+            if (pe->complete) {
+                printf("termine de leer el comando\n");
+                break;
+            }
         }
-
-    }
-        //const enum auth_state st = hello_consume(d->rb, &d->parser, &error);
+        /*//const enum auth_state st = hello_consume(d->rb, &d->parser, &error);
         if (hello_is_done(st, 0))
         {
             if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE))
@@ -220,7 +172,7 @@ static unsigned auth_no_user_read(struct selector_key *key)
             {
                 ret = ERROR;
             }
-        }
+        }*/
     }
     else
     {
@@ -230,8 +182,12 @@ static unsigned auth_no_user_read(struct selector_key *key)
     return error ? ERROR : ret;
 }
 
-void empty_function(){
+static void empty_function(const unsigned state, struct selector_key *key){
+    return ;
+}
 
+static unsigned empty_function2(struct selector_key *key){
+    return 0;
 }
 
 
@@ -242,33 +198,39 @@ static const struct state_definition client_statbl[] = {
         .state = AUTH_NO_USER,
         .on_arrival = auth_parser_init, //Inicializar los parsers
         .on_read_ready = auth_no_user_read, //Se hace la lectura
-        .on_write_ready = auth_no_user_write,
+        .on_write_ready = empty_function2,//auth_no_user_write,
     },
     {
         .state = AUTH_NO_PASS,
         .on_departure = empty_function, //Aca habria que llamar a auth_parser_close
-        .on_read_ready = empty_function,
-        .on_write_ready = empty_function,
+        .on_read_ready = empty_function2,
+        .on_write_ready = empty_function2,
     },
     {
         .state = TRANSACTION,
         .on_arrival = empty_function,
         .on_departure = empty_function,
-        .on_read_ready = empty_function,
-        .on_write_ready = empty_function,
+        .on_read_ready = empty_function2,
+        .on_write_ready = empty_function2,
     },
     {
         .state = UPDATE,
         .on_arrival = empty_function,
         .on_departure = empty_function,
-        .on_read_ready = empty_function,
-        .on_write_ready = empty_function,
+        .on_read_ready = empty_function2,
+        .on_write_ready = empty_function2,
+    },
+    {
+        .state = DONE,
+        .on_arrival = empty_function,
+        .on_departure = empty_function,
+        .on_read_ready = empty_function2,
     },
     {
         .state = ERROR,
         .on_arrival = empty_function,
         .on_departure = empty_function,
-        .on_read_ready = empty_function,
+        .on_read_ready = empty_function2,
     },
 };
 
@@ -353,44 +315,6 @@ fail:
         close(client);
     }
     //pop3_destroy(state);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// HELLO
-////////////////////////////////////////////////////////////////////////////////
-
-/** callback del parser utilizado en `read_hello' */
-static void
-on_hello_method(struct hello_parser *p, const uint8_t method)
-{
-    uint8_t *selected = p->data;
-
-    if (SOCKS_HELLO_NOAUTHENTICATION_REQUIRED == method)
-    {
-        *selected = method;
-    }
-}
-
-static unsigned
-hello_process(const struct hello_st *d);
-
-/** procesamiento del mensaje `hello' */
-static unsigned
-hello_process(const struct hello_st *d)
-{
-    unsigned ret = HELLE;
-
-    uint8_t m = d->method;
-    const uint8_t r = (m == SOCKS_HELLO_NO_ACCEPTABLE_METHODS) ? 0xFF : 0x00;
-    if (-1 == hello_marshall(d->wb, r))
-    {
-        ret = ERROR;
-    }
-    if (SOCKS_HELLO_NO_ACCEPTABLE_METHODS == m)
-    {
-        ret = ERROR;
-    }
-    return ret;
 }
 
 static void
