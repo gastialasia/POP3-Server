@@ -42,23 +42,14 @@ fn_type comparator(struct parser_event * pe, unsigned int curr_state){
 unsigned int capa_handler(buffer *b) {
     size_t i=0;
     size_t count;
-    char msg[]="hola";
-    //uint8_t* buf = 
-    buffer_write_ptr(b, &count);
-    if(count < strlen(msg)){
+    char msg[]="+OK\nCAPA\nUSER\nPIPELINING\n.\r\n";
+    size_t len = strlen(msg);
+    uint8_t* buf = buffer_write_ptr(b, &count);
+    if(count < len){
         return 2;
     }
-
-    for(i=0; i<=strlen(msg); i++){
-        buffer_write(b, msg[i]);
-    }
-
-    /*printf("%ld", count);
-    memcpy(buf, msg, 5);
-    buffer_write_adv(b, 5);
-    for(i=0; i<=strlen(msg); i++){
-        //printf("llegue\n");
-        buffer_write(b, msg[i]);
-    }*/
+    memcpy(buf, msg, len);
+    buffer_write_adv(b, len);
+    
     return i;
 }
