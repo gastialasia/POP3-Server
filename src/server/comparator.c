@@ -9,33 +9,56 @@
 
 typedef struct{
     char command_id[COMMAND_LEN];
-    void* command_handler;
+    unsigned int(*command_handler)(buffer*);
 } command_type;
 
-static void * blank_function(){
+unsigned int noop(){
     printf("Func blanca\n");
+    return 0;
 }
 
-static void * capa_handler(){
-    printf("Estoy haciendo CAPA!!!!\n");
-}
+
 
 static command_type auth_commands[AUTH_COMMAND_QTY] = {
-    {.command_id = 'CAPA', .command_handler = &capa_handler},
-    {.command_id = 'USER', .command_handler = &blank_function},
-    {.command_id = 'PASS', .command_handler = &blank_function},
-    {.command_id = 'QUIT', .command_handler = &blank_function},
+    {.command_id = "CAPA", .command_handler = &capa_handler},
+    {.command_id = "USER", .command_handler = &noop},
+    {.command_id = "PASS", .command_handler = &noop},
+    {.command_id = "QUIT", .command_handler = &noop},
 };
 
-void * comparator(struct parser_event * pe, unsigned int curr_state){
+fn_type comparator(struct parser_event * pe, unsigned int curr_state){
     char * command = pe->commands[0];
-    command_type curr_command;
+    //command_type curr_command;
     //void * ret = &blank_function; // Funcion de error por default
     for(int i=0; i<AUTH_COMMAND_QTY; i++){
-        curr_command = auth_commands[i];
-        if (!strcmp(curr_command.command_id, command)){
-            return curr_command.command_handler;
+        //curr_command = auth_commands[i];
+        if (!strcmp(auth_commands[i].command_id, command)){
+            return auth_commands[i].command_handler;
         }
     }
-    return &blank_function;
+    return &noop;
+}
+
+unsigned int capa_handler(buffer *b) {
+    size_t i=0;
+    size_t count;
+    char msg[]="hola";
+    //uint8_t* buf = 
+    buffer_write_ptr(b, &count);
+    if(count < strlen(msg)){
+        return 2;
+    }
+
+    for(i=0; i<=strlen(msg); i++){
+        buffer_write(b, msg[i]);
+    }
+
+    /*printf("%ld", count);
+    memcpy(buf, msg, 5);
+    buffer_write_adv(b, 5);
+    for(i=0; i<=strlen(msg); i++){
+        //printf("llegue\n");
+        buffer_write(b, msg[i]);
+    }*/
+    return i;
 }

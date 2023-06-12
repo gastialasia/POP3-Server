@@ -21,6 +21,7 @@
 
 #include "../include/parser.h"
 #include "../include/tokenizer.h"
+#include "../include/comparator.h"
 
 
 
@@ -143,7 +144,7 @@ static unsigned auth_no_user_read(struct selector_key *key)
     uint8_t *ptr;
     size_t count;
     ssize_t n;
-    void * command_handler;
+    fn_type command_handler;
 
     ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
     n = recv(key->fd, ptr, count, 0);
@@ -156,11 +157,8 @@ static unsigned auth_no_user_read(struct selector_key *key)
             //funcion para fijarnos si termino de pasear
             if (pe->complete) {
                 if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
-                //if (1){
-                    printf("termine de leer el comando\n");
-                    printf("Comando: %s\n", pe->commands[0]);
                     command_handler = comparator(pe, curr_state); //Esto tiene que devolver el estado grande al que vamos.
-                    curr_state = command_handler(); 
+                    curr_state = command_handler(d->wb); 
                 } else {
                     curr_state = ERROR; //Si dio el selector
                 }
@@ -173,6 +171,39 @@ static unsigned auth_no_user_read(struct selector_key *key)
 
     //return error ? ERROR : curr_state;
     return curr_state;
+}
+
+static unsigned auth_no_user_write(struct selector_key *key) { // key corresponde a un client_fd
+    //struct auth_st *d = &ATTACHMENT(key)->client.auth_no_user;
+
+    //printf("teteeeeeee\n");
+    /*
+    unsigned ret = 0;
+    uint8_t  *ptr;
+    size_t   count;
+    ssize_t  n;
+    
+    ptr = buffer_read_ptr(d->wb, &count);
+    // esto deberia llamarse cuando el select lo despierta y sabe que se puede escribir al menos 1 byte, por eso no checkeamos el EWOULDBLOCK
+    n = send(key->fd, ptr, count, MSG_NOSIGNAL);
+    if (n == -1) {
+        ret = ERROR;
+    } else {
+        buffer_read_adv(d->wb, n);
+        // si terminamos de mandar toda la response del HELLO, hacemos transicion HELLO_WRITE -> AUTH_READ o HELLO_WRITE -> REQUEST_READ
+        if (!buffer_can_read(d->wb)) {
+            if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_READ)) {
+                // en caso de que haya fallado el handshake del hello, el cliente es el que cerrara la conexion
+                ret = 0;//is_auth_on ? AUTH_READ : REQUEST_READ;
+            } else {
+                ret = ERROR;
+            }
+        }
+    }
+
+    return ret;
+    */
+   return AUTH_NO_USER;
 }
 
 static void empty_function(const unsigned state, struct selector_key *key){
@@ -191,7 +222,7 @@ static const struct state_definition client_statbl[] = {
         .state = AUTH_NO_USER,
         .on_arrival = auth_parser_init, //Inicializar los parsers
         .on_read_ready = auth_no_user_read, //Se hace la lectura
-        .on_write_ready = empty_function2,//auth_no_user_write,
+        .on_write_ready = auth_no_user_write,//auth_no_user_write,
     },
     {
         .state = AUTH_NO_PASS,

@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <assert.h>
-
+#include <stdio.h>
 #include "../include/buffer.h"
 
 inline void
@@ -82,6 +82,7 @@ buffer_read(buffer *b) {
 inline void
 buffer_write(buffer *b, uint8_t c) {
     if(buffer_can_write(b)) {
+        printf("Pude escribir\n");
         *b->write = c;
         buffer_write_adv(b, 1);
     }
