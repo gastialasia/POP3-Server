@@ -158,3 +158,9 @@ void store_second_arg(struct parser_event *event, const uint8_t c)
     event->commands[2][(event->index)++] = c;
     event->commands[2][(event->index)] = '\0';
 }
+
+void clear_commands(struct parser_event * event) {
+    if(event->commands[0]!=NULL){
+        free(event->commands[0]);
+    }
+}

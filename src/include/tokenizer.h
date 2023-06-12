@@ -30,4 +30,6 @@ void store_first_arg(struct parser_event *event, const uint8_t c);
 
 void store_second_arg(struct parser_event *event, const uint8_t c);
 
+void clear_commands(struct parser_event * event);
+
 #endif
