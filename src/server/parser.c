@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include "../include/parser.h"
@@ -48,17 +49,19 @@ void parser_reset(struct parser *p)
 struct parser_event *
 parser_feed(struct parser *p, const uint8_t c)
 {
-    const unsigned type = p->classes[c];
+    //const unsigned type = p->classes[c];
 
     p->e1.next = 0;
-
+    
     const struct parser_state_transition *state = p->def->states[p->state];
     const size_t n = p->def->states_n[p->state];
     bool matched = false;
 
+
     for (unsigned i = 0; i < n; i++)
     {
         const int when = state[i].when;
+        
         if (state[i].when <= 0xFF)
         {
             matched = (c == when);
@@ -67,10 +70,6 @@ parser_feed(struct parser *p, const uint8_t c)
         {
             matched = true;
         }
-        else if (state[i].when > 0xFF)
-        {
-            matched = (type & when);
-        }
         else
         {
             matched = false;
@@ -78,12 +77,23 @@ parser_feed(struct parser *p, const uint8_t c)
 
         if (matched)
         {
-            state[i].act1(&p->e1, c);
+            if(state[i].act1!=NULL){
+                state[i].act1(&p->e1, c);
+            }
             p->state = state[i].dest;
             break;
         }
     }
+
     return &p->e1;
+}
+
+struct parser_event * get_last_event(struct parser *p){
+    struct parser_event * aux = &p->e1;
+    while (aux->next != NULL) {
+        aux = aux->next;
+    }
+    return aux;
 }
 
 static const unsigned classes[0xFF] = {0x00};

@@ -107,14 +107,14 @@ struct parser *create_parser()
     error[1].dest = ERR0R_STATE;
     error[1].act1 = NULL;
 
-    struct parser_definition parser_definition = {
-        .start_state = COMMAND_STATE,
-        .states = states,
-        .states_count = STATEQTY,
-        .states_n = transition_qty,
-    };
+    struct parser_definition * parser_definition = malloc(sizeof(struct parser_definition));
 
-    return parser_init(parser_no_classes(), &parser_definition);
+    parser_definition->start_state = COMMAND_STATE;
+    parser_definition->states = states;
+    parser_definition->states_count = STATEQTY;
+    parser_definition->states_n = transition_qty;
+
+    return parser_init(parser_no_classes(), parser_definition);
 }
 
 void completed(struct parser_event *event, const uint8_t c){
@@ -131,16 +131,18 @@ void restart_index(struct parser_event *event, const uint8_t c)
 
 void store_command(struct parser_event *event, const uint8_t c)
 {
+    printf("Comando: guardando la %c \n\n", c);
     if (event->commands[0] == NULL)
     {
-        event->commands[0] = malloc(5 * sizeof(char)); // 4 bytes para command, y el null terminated
+        event->commands[0] = malloc(10 * sizeof(char)); // 4 bytes para command, y el null terminated
     }
-    event->commands[0][(event->index)++] = c;
-    event->commands[0][(event->index)] = '\0';
+    event->commands[0][event->index++] = c;
+    event->commands[0][event->index] = '\0';
 }
 
 void store_first_arg(struct parser_event *event, const uint8_t c)
 {
+    printf("Arg1: guardando la %c \n\n", c);
     if (event->commands[1] == NULL)
     {
         event->commands[1] = malloc(40 * sizeof(char)); // 40 para cada argumnento y null terminates

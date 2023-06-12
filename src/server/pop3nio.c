@@ -144,24 +144,27 @@ static unsigned auth_no_user_read(struct selector_key *key)
     size_t count;
     ssize_t n;
 
-    ptr = buffer_write_ptr(d->rb, &count);
+    ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
     n = recv(key->fd, ptr, count, 0);
-
-    printf("%ld\n",n);
     if (n > 0)
     {
-
         buffer_write_adv(d->rb, n);
         while(buffer_can_read(d->rb)) {
             const uint8_t c = buffer_read(d->rb);
-            struct parser_event * pe = parser_feed(d->parser, c);
+            putchar(c);
+            putchar('\n');
+            parser_feed(d->parser, c);
+            struct parser_event * pe = get_last_event(d->parser);
             //funcion para fijarnos si termino de pasear
+            /*
             if (pe->complete) {
-                //printf("termine de leer el comando\n");
-                //break;
-            }
+                printf("termine de leer el comando\n");
+                break;
+            }  
+            */
         }
-        /*//const enum auth_state st = hello_consume(d->rb, &d->parser, &error);
+        /*
+        const enum auth_state st = hello_consume(d->rb, &d->parser, &error);
         if (hello_is_done(st, 0))
         {
             if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE))
