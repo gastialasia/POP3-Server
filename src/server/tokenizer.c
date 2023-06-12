@@ -131,7 +131,6 @@ void restart_index(struct parser_event *event, const uint8_t c)
 
 void store_command(struct parser_event *event, const uint8_t c)
 {
-    printf("Comando: guardando la %c \n\n", c);
     if (event->commands[0] == NULL)
     {
         event->commands[0] = malloc(10 * sizeof(char)); // 4 bytes para command, y el null terminated
@@ -142,7 +141,6 @@ void store_command(struct parser_event *event, const uint8_t c)
 
 void store_first_arg(struct parser_event *event, const uint8_t c)
 {
-    printf("Arg1: guardando la %c \n\n", c);
     if (event->commands[1] == NULL)
     {
         event->commands[1] = malloc(40 * sizeof(char)); // 40 para cada argumnento y null terminates

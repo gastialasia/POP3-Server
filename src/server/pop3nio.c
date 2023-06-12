@@ -138,51 +138,41 @@ auth_parser_init(const unsigned state, struct selector_key *key)
 static unsigned auth_no_user_read(struct selector_key *key)
 {
     struct auth_st *d = &ATTACHMENT(key)->client.auth_no_user;
-    unsigned ret = AUTH_NO_USER;
-    bool error = false;
+    unsigned int curr_state = AUTH_NO_USER;
+    //bool error = false;
     uint8_t *ptr;
     size_t count;
     ssize_t n;
+    void * command_handler;
 
     ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
     n = recv(key->fd, ptr, count, 0);
-    if (n > 0)
-    {
+    if (n > 0){
         buffer_write_adv(d->rb, n);
         while(buffer_can_read(d->rb)) {
             const uint8_t c = buffer_read(d->rb);
-            putchar(c);
-            putchar('\n');
             parser_feed(d->parser, c);
             struct parser_event * pe = get_last_event(d->parser);
             //funcion para fijarnos si termino de pasear
-            /*
             if (pe->complete) {
-                printf("termine de leer el comando\n");
+                if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
+                //if (1){
+                    printf("termine de leer el comando\n");
+                    printf("Comando: %s\n", pe->commands[0]);
+                    command_handler = comparator(pe, curr_state); //Esto tiene que devolver el estado grande al que vamos.
+                    curr_state = command_handler(); 
+                } else {
+                    curr_state = ERROR; //Si dio el selector
+                }
                 break;
-            }  
-            */
+            }
         }
-        /*
-        const enum auth_state st = hello_consume(d->rb, &d->parser, &error);
-        if (hello_is_done(st, 0))
-        {
-            if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE))
-            {
-                ret = hello_process(d);
-            }
-            else
-            {
-                ret = ERROR;
-            }
-        }*/
-    }
-    else
-    {
-        ret = ERROR;
+    } else {
+        curr_state = ERROR; // Si dio error el recv
     }
 
-    return error ? ERROR : ret;
+    //return error ? ERROR : curr_state;
+    return curr_state;
 }
 
 static void empty_function(const unsigned state, struct selector_key *key){
