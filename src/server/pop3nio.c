@@ -146,19 +146,19 @@ static unsigned auth_no_user_read(struct selector_key *key)
 
     ptr = buffer_write_ptr(d->rb, &count);
     n = recv(key->fd, ptr, count, 0);
-    printf("%s\n", ptr);
-    printf("%ld", n);
+
+    printf("%ld\n",n);
     if (n > 0)
     {
+
         buffer_write_adv(d->rb, n);
-        buffer_read_adv(d->rb, n);
         while(buffer_can_read(d->rb)) {
             const uint8_t c = buffer_read(d->rb);
             struct parser_event * pe = parser_feed(d->parser, c);
             //funcion para fijarnos si termino de pasear
             if (pe->complete) {
-                printf("termine de leer el comando\n");
-                break;
+                //printf("termine de leer el comando\n");
+                //break;
             }
         }
         /*//const enum auth_state st = hello_consume(d->rb, &d->parser, &error);
