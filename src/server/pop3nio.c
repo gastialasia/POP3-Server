@@ -158,7 +158,11 @@ static unsigned auth_no_user_read(struct selector_key *key)
             if (pe->complete) {
                 if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
                     command_handler = comparator(pe, curr_state); //Esto tiene que devolver el estado grande al que vamos.
-                    curr_state = command_handler(d->wb); 
+                    curr_state = command_handler(d->wb);
+                    pe->complete = 0;
+                    for(int i=0; i<10; i++){
+                        pe->commands[0][i]=0;
+                    }
                 } else {
                     curr_state = ERROR; //Si dio el selector
                 }
@@ -174,10 +178,8 @@ static unsigned auth_no_user_read(struct selector_key *key)
 }
 
 static unsigned auth_no_user_write(struct selector_key *key) { // key corresponde a un client_fd
-    //struct auth_st *d = &ATTACHMENT(key)->client.auth_no_user;
+    struct auth_st *d = &ATTACHMENT(key)->client.auth_no_user;
 
-    //printf("teteeeeeee\n");
-    /*
     unsigned ret = 0;
     uint8_t  *ptr;
     size_t   count;
@@ -194,7 +196,7 @@ static unsigned auth_no_user_write(struct selector_key *key) { // key correspond
         if (!buffer_can_read(d->wb)) {
             if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_READ)) {
                 // en caso de que haya fallado el handshake del hello, el cliente es el que cerrara la conexion
-                ret = 0;//is_auth_on ? AUTH_READ : REQUEST_READ;
+                ret = AUTH_NO_USER;//is_auth_on ? AUTH_READ : REQUEST_READ;
             } else {
                 ret = ERROR;
             }
@@ -202,9 +204,9 @@ static unsigned auth_no_user_write(struct selector_key *key) { // key correspond
     }
 
     return ret;
-    */
-   return AUTH_NO_USER;
 }
+
+
 
 static void empty_function(const unsigned state, struct selector_key *key){
     return ;

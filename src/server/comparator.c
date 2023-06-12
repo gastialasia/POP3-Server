@@ -17,8 +17,6 @@ unsigned int noop(){
     return 0;
 }
 
-
-
 static command_type auth_commands[AUTH_COMMAND_QTY] = {
     {.command_id = "CAPA", .command_handler = &capa_handler},
     {.command_id = "USER", .command_handler = &noop},
