@@ -7,6 +7,9 @@
 #define AUTH_COMMAND_QTY 4
 #define COMMAND_LEN 5
 
+#define CAPA_MSG "+OK\nCAPA\nUSER\nPIPELINING\n.\r\n"
+#define INVALID_COMMAND_MSG "-ERR Unknown command.\r\n"
+
 typedef struct{
     char command_id[COMMAND_LEN];
     unsigned int(*command_handler)(buffer*);
@@ -16,6 +19,27 @@ unsigned int noop(){
     printf("Func blanca\n");
     return 0;
 }
+
+unsigned int write_to_buffer(char * str, buffer *b){
+    size_t count;
+    size_t len = strlen(str);
+    uint8_t* buf = buffer_write_ptr(b, &count);
+    if(count < len){
+        return 2;
+    }
+    memcpy(buf, str, len);
+    buffer_write_adv(b, len);
+    return 0;
+}
+
+unsigned int capa_handler(buffer *b) {
+    return write_to_buffer(CAPA_MSG, b);
+}
+
+unsigned int invalid_command_handler(buffer *b) {
+    return write_to_buffer(INVALID_COMMAND_MSG, b);
+}
+
 
 static command_type auth_commands[AUTH_COMMAND_QTY] = {
     {.command_id = "CAPA", .command_handler = &capa_handler},
@@ -34,20 +58,7 @@ fn_type comparator(struct parser_event * pe, unsigned int curr_state){
             return auth_commands[i].command_handler;
         }
     }
-    return &noop;
+    return &invalid_command_handler;
 }
 
-unsigned int capa_handler(buffer *b) {
-    size_t i=0;
-    size_t count;
-    char msg[]="+OK\nCAPA\nUSER\nPIPELINING\n.\r\n";
-    size_t len = strlen(msg);
-    uint8_t* buf = buffer_write_ptr(b, &count);
-    if(count < len){
-        return 2;
-    }
-    memcpy(buf, msg, len);
-    buffer_write_adv(b, len);
-    
-    return i;
-}
+

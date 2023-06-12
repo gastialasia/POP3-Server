@@ -159,10 +159,7 @@ static unsigned auth_no_user_read(struct selector_key *key)
                 if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
                     command_handler = comparator(pe, curr_state); //Esto tiene que devolver el estado grande al que vamos.
                     curr_state = command_handler(d->wb);
-                    pe->complete = 0;
-                    for(int i=0; i<10; i++){
-                        pe->commands[0][i]=0;
-                    }
+                    restart_tokenizer(pe);
                 } else {
                     curr_state = ERROR; //Si dio el selector
                 }
