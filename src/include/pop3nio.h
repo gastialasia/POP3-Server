@@ -12,8 +12,7 @@
 /** maquina de estados general */
 enum pop3state
 {
-    AUTH_NO_USER, //Se mueve a AUTH_NO_USER, AUTH_NO_PASS o ERROR
-    AUTH_NO_PASS, // Se mueve a TRANSACTION, AUTH_NO_PASS o ERROR
+    AUTH, //Se mueve a AUTH o ERROR
     TRANSACTION, // Se mueve a QUIT, ERROR o TRANSACTION
     UPDATE,
     // estados terminales
@@ -53,8 +52,7 @@ struct pop3
     /** estados para el client_fd */
     union
     {
-        struct auth_st auth_no_user;
-        struct auth_st auth_no_pass;
+        struct auth_st auth;
     } client;
 };
 

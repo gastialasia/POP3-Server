@@ -80,16 +80,16 @@ static const struct fd_handler pop3_handler = {
 static void
 auth_parser_init(const unsigned state, struct selector_key *key)
 {
-    struct auth_st *d = &ATTACHMENT(key)->client.auth_no_user;
+    struct auth_st *d = &ATTACHMENT(key)->client.auth;
     d->rb = &(ATTACHMENT(key)->read_buffer);
     d->wb = &(ATTACHMENT(key)->write_buffer);
     d->parser = create_parser(); //Inicializo nuestro tokenizer
 }
 
-static unsigned auth_no_user_read(struct selector_key *key)
+static unsigned auth_read(struct selector_key *key)
 {
-    struct auth_st *d = &ATTACHMENT(key)->client.auth_no_user;
-    unsigned int curr_state = AUTH_NO_USER;
+    struct auth_st *d = &ATTACHMENT(key)->client.auth;
+    unsigned int curr_state = AUTH;
     //bool error = false;
     uint8_t *ptr;
     size_t count;
@@ -123,8 +123,8 @@ static unsigned auth_no_user_read(struct selector_key *key)
     return curr_state;
 }
 
-static unsigned auth_no_user_write(struct selector_key *key) { // key corresponde a un client_fd
-    struct auth_st *d = &ATTACHMENT(key)->client.auth_no_user;
+static unsigned auth_write(struct selector_key *key) { // key corresponde a un client_fd
+    struct auth_st *d = &ATTACHMENT(key)->client.auth;
 
     unsigned ret = 0;
     uint8_t  *ptr;
@@ -142,7 +142,7 @@ static unsigned auth_no_user_write(struct selector_key *key) { // key correspond
         if (!buffer_can_read(d->wb)) {
             if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_READ)) {
                 // en caso de que haya fallado el handshake del hello, el cliente es el que cerrara la conexion
-                ret = AUTH_NO_USER;//is_auth_on ? AUTH_READ : REQUEST_READ;
+                ret = AUTH;//is_auth_on ? AUTH_READ : REQUEST_READ;
             } else {
                 ret = ERROR;
             }
@@ -170,16 +170,10 @@ static void print_current_state(const unsigned state, struct selector_key *key){
 /** definición de handlers para cada estado */
 static const struct state_definition client_statbl[] = {
     {
-        .state = AUTH_NO_USER,
+        .state = AUTH,
         .on_arrival = auth_parser_init, //Inicializar los parsers
-        .on_read_ready = auth_no_user_read, //Se hace la lectura
-        .on_write_ready = auth_no_user_write,//auth_no_user_write,
-    },
-    {
-        .state = AUTH_NO_PASS,
-        .on_departure = empty_function, //Aca habria que llamar a auth_parser_close
-        .on_read_ready = empty_function2,
-        .on_write_ready = empty_function2,
+        .on_read_ready = auth_read, //Se hace la lectura
+        .on_write_ready = auth_write,//auth_write,
     },
     {
         .state = TRANSACTION,
@@ -240,7 +234,7 @@ static struct pop3 *pop3_new(int client_fd)
     ret->client_fd = client_fd;
     ret->client_addr_len = sizeof(ret->client_addr);
 
-    ret->stm.initial = AUTH_NO_USER;
+    ret->stm.initial = AUTH;
     ret->stm.max_state = ERROR;
     ret->stm.states = pop3_describe_states();
     ret->credentials = malloc(sizeof(struct credentials_t));

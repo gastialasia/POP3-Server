@@ -55,13 +55,13 @@ int validate_credentials(struct pop3 * p3, char * pass){
 unsigned int capa_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
     //Falta if para elegir mensaje segun el estado
     write_to_buffer(CAPA_MSG, b);
-    return AUTH_NO_USER;
+    return AUTH;
 }
 
 unsigned int invalid_command_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
     write_to_buffer(INVALID_COMMAND_MSG, b);
     //Falta if
-    return AUTH_NO_USER; 
+    return AUTH; 
 }
 
 unsigned int user_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
@@ -71,7 +71,7 @@ unsigned int user_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
         strncpy(p3->credentials->user, arg1, len+1);
     }
     write_to_buffer(POSITIVE_MSG, b);
-    return AUTH_NO_USER;
+    return AUTH;
 }
 
 unsigned int pass_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
@@ -90,7 +90,7 @@ unsigned int pass_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
         
     }
     write_to_buffer(AUTH_ERROR_MSG, b);
-    return AUTH_NO_USER;
+    return AUTH;
 }
 
 fn_type comparator(struct parser_event * pe, unsigned int curr_state){
