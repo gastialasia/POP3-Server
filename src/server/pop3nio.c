@@ -13,9 +13,7 @@
 #include <arpa/inet.h>
 
 #include "../include/hello.h"
-#include "../include/buffer.h"
 
-#include "../include/stm.h"
 #include "../include/pop3nio.h"
 #include "../include/netutils.h"
 
@@ -26,44 +24,18 @@
 
 
 #define N(x) (sizeof(x) / sizeof((x)[0]))
-#define BUFFER_SIZE 1024
+
 
 ////////////////////////////////////////////////////////////////////
 // Definición de variables para cada estado
 
-/** usado por HELLO_READ, HELLO_WRITE */
-struct hello_st
-{
-    /** buffer utilizado para I/O */
-    buffer *rb, *wb;
-    struct hello_parser parser;
-    /** el método de autenticación seleccionado */
-    uint8_t method;
-};
 
-struct auth_st
-{
-    /** buffer utilizado para I/O */
-    buffer *rb, *wb;
-    struct parser * parser;
 
-};
 
 // Variable globales
 static unsigned int connections = 0; // live qty of connections
 static struct pop3 *head_connection = NULL;
 
-/** maquina de estados general */
-enum pop3state
-{
-    AUTH_NO_USER, //Se mueve a AUTH_NO_USER, AUTH_NO_PASS o ERROR
-    AUTH_NO_PASS, // Se mueve a TRANSACTION, AUTH_NO_PASS o ERROR
-    TRANSACTION, // Se mueve a QUIT, ERROR o TRANSACTION
-    UPDATE,
-    // estados terminales
-    DONE,
-    ERROR,
-};
 
 /*
  * Si bien cada estado tiene su propio struct que le da un alcance
@@ -73,28 +45,6 @@ enum pop3state
  * Se utiliza un contador de referencias (references) para saber cuando debemos
  * liberarlo finalmente, y un pool para reusar alocaciones previas.
  */
-struct pop3
-{
-    /** maquinas de estados */
-    struct state_machine stm;
-
-    int client_fd;
-    struct sockaddr_storage client_addr; // direccion IP
-    socklen_t client_addr_len;           // IPV4 or IPV6
-
-    uint8_t raw_buff_a[BUFFER_SIZE], raw_buff_b[BUFFER_SIZE];
-    buffer read_buffer, write_buffer;
-
-    struct pop3 *next;
-
-    /** estados para el client_fd */
-    union
-    {
-        struct hello_st hello;
-        struct auth_st auth_no_user;
-        struct auth_st auth_no_pass;
-    } client;
-};
 
 /** realmente destruye */
 static void pop3_destroy(struct pop3 *s)
@@ -148,20 +98,17 @@ static unsigned auth_no_user_read(struct selector_key *key)
 
     ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
     n = recv(key->fd, ptr, count, 0);
-    printf("n: %ld\n", n);
     if (n > 0){
         buffer_write_adv(d->rb, n);    //Buffer: CAPA\r\n . CAPA\r\n
         while(buffer_can_read(d->rb)) {
             const uint8_t c = buffer_read(d->rb);
-            putchar(c);
-            putchar('\n');
             parser_feed(d->parser, c);
             struct parser_event * pe = get_last_event(d->parser);
             //funcion para fijarnos si termino de pasear
             if (pe->complete) {
                 if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
                     command_handler = comparator(pe, curr_state); //Esto tiene que devolver el estado grande al que vamos.
-                    curr_state = command_handler(d->wb);
+                    curr_state = command_handler(d->wb, ATTACHMENT(key), pe->commands[1], pe->commands[2]);
                     restart_tokenizer(pe);
                 } else {
                     curr_state = ERROR; //Si dio el selector
@@ -215,6 +162,9 @@ static unsigned empty_function2(struct selector_key *key){
     return 0;
 }
 
+static void print_current_state(const unsigned state, struct selector_key *key){
+    printf("LLegue a transaction\n");
+}
 
 
 /** definición de handlers para cada estado */
@@ -233,7 +183,7 @@ static const struct state_definition client_statbl[] = {
     },
     {
         .state = TRANSACTION,
-        .on_arrival = empty_function,
+        .on_arrival = print_current_state,
         .on_departure = empty_function,
         .on_read_ready = empty_function2,
         .on_write_ready = empty_function2,
@@ -293,6 +243,7 @@ static struct pop3 *pop3_new(int client_fd)
     ret->stm.initial = AUTH_NO_USER;
     ret->stm.max_state = ERROR;
     ret->stm.states = pop3_describe_states();
+    ret->credentials = malloc(sizeof(struct credentials_t));
     stm_init(&ret->stm);
 
     buffer_init(&ret->read_buffer, N(ret->raw_buff_a), ret->raw_buff_a);
