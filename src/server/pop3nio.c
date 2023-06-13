@@ -78,12 +78,12 @@ static const struct fd_handler pop3_handler = {
 };
 
 static void
-auth_parser_init(const unsigned state, struct selector_key *key)
+auth_init(const unsigned state, struct selector_key *key)
 {
     struct auth_st *d = &ATTACHMENT(key)->client.auth;
     d->rb = &(ATTACHMENT(key)->read_buffer);
     d->wb = &(ATTACHMENT(key)->write_buffer);
-    d->parser = create_parser(); //Inicializo nuestro tokenizer
+    d->parser = ATTACHMENT(key)->parser;
 }
 
 static unsigned auth_read(struct selector_key *key)
@@ -171,7 +171,7 @@ static void print_current_state(const unsigned state, struct selector_key *key){
 static const struct state_definition client_statbl[] = {
     {
         .state = AUTH,
-        .on_arrival = auth_parser_init, //Inicializar los parsers
+        .on_arrival = auth_init, //Inicializar los parsers
         .on_read_ready = auth_read, //Se hace la lectura
         .on_write_ready = auth_write,//auth_write,
     },
@@ -238,6 +238,7 @@ static struct pop3 *pop3_new(int client_fd)
     ret->stm.max_state = ERROR;
     ret->stm.states = pop3_describe_states();
     ret->credentials = malloc(sizeof(struct credentials_t));
+    ret->parser = create_parser();
     stm_init(&ret->stm);
 
     buffer_init(&ret->read_buffer, N(ret->raw_buff_a), ret->raw_buff_a);

@@ -5,6 +5,7 @@
 #include "selector.h"
 #include "stm.h"
 #include "buffer.h"
+#include "parser.h"
 
 #define MAX_USERS 5
 #define BUFFER_SIZE 1024
@@ -33,6 +34,13 @@ struct auth_st
 
 };
 
+struct trans_st
+{
+    buffer *rb, *wb;
+    struct parser * parser;
+
+};
+
 struct pop3
 {
     /** maquinas de estados */
@@ -47,12 +55,15 @@ struct pop3
 
     struct credentials_t * credentials;
 
+    struct parser * parser;
+
     struct pop3 *next;
 
     /** estados para el client_fd */
     union
     {
         struct auth_st auth;
+        struct trans_st trans;
     } client;
 };
 
