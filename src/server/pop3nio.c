@@ -148,10 +148,13 @@ static unsigned auth_no_user_read(struct selector_key *key)
 
     ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
     n = recv(key->fd, ptr, count, 0);
+    printf("n: %ld\n", n);
     if (n > 0){
-        buffer_write_adv(d->rb, n);
+        buffer_write_adv(d->rb, n);    //Buffer: CAPA\r\n . CAPA\r\n
         while(buffer_can_read(d->rb)) {
             const uint8_t c = buffer_read(d->rb);
+            putchar(c);
+            putchar('\n');
             parser_feed(d->parser, c);
             struct parser_event * pe = get_last_event(d->parser);
             //funcion para fijarnos si termino de pasear
@@ -163,7 +166,6 @@ static unsigned auth_no_user_read(struct selector_key *key)
                 } else {
                     curr_state = ERROR; //Si dio el selector
                 }
-                break;
             }
         }
     } else {
