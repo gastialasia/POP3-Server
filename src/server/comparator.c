@@ -1,6 +1,9 @@
 //Parser comparator: su funcion es matchear el comando en el array procesado por tokenizer con la lista de comandos permitidos para el estado actual de forma que el flujo de la ejecucion pueda derivarse en el handler correspondiente
 #include "../include/parser.h"
 #include "../include/comparator.h"
+#include "../include/pop3nio.h"
+#include "../include/email.h"
+
 #include <string.h>
 #include <stdlib.h>
 
@@ -66,8 +69,13 @@ int validate_credentials(struct pop3 * p3, char * pass){
     return !strcmp(p3->credentials->user, TEST_USER) && !strcmp(pass, TEST_PASS);
 }
 
-unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2){
+/*unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2){
     write_to_buffer(POSITIVE_MSG, b);
+    return p3->stm.current->state;
+}*/
+
+unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2){
+    printf("%s\n", read_mail(open_maildir(p3, INITIAL_PATH)));
     return p3->stm.current->state;
 }
 

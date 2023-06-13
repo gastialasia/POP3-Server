@@ -21,21 +21,13 @@
 #include "../include/tokenizer.h"
 #include "../include/comparator.h"
 
-
-
 #define N(x) (sizeof(x) / sizeof((x)[0]))
-
-
-////////////////////////////////////////////////////////////////////
-// Definición de variables para cada estado
-
-
-
 
 // Variable globales
 static unsigned int connections = 0; // live qty of connections
 static struct pop3 *head_connection = NULL;
-
+//path a la carpeta donde estan los directorios de todos los usuarios
+char* path_to_maildir = INITIAL_PATH;
 
 /*
  * Si bien cada estado tiene su propio struct que le da un alcance

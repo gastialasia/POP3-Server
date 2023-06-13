@@ -7,6 +7,8 @@
 #include "buffer.h"
 #include "parser.h"
 
+#define INITIAL_PATH "../../directories/"
+
 #define MAX_USERS 5
 #define BUFFER_SIZE 1024
 
@@ -61,7 +63,7 @@ struct pop3
     struct credentials_t * credentials;
 
     struct parser * parser;
-
+    
     struct pop3 *next;
 
     /** estados para el client_fd 
