@@ -26,12 +26,11 @@ struct credentials_t {
     char * pass;
 };
 
-struct auth_st
+/*struct auth_st
 {
-    /** buffer utilizado para I/O */
+    //buffer utilizado para I/O
     buffer *rb, *wb;
     struct parser * parser;
-
 };
 
 struct trans_st
@@ -39,6 +38,12 @@ struct trans_st
     buffer *rb, *wb;
     struct parser * parser;
 
+};
+*/
+
+struct state_st{
+    buffer *rb, *wb;
+    struct parser * parser;
 };
 
 struct pop3
@@ -59,12 +64,14 @@ struct pop3
 
     struct pop3 *next;
 
-    /** estados para el client_fd */
+    /** estados para el client_fd 
     union
     {
         struct auth_st auth;
         struct trans_st trans;
     } client;
+    */
+   struct state_st state;
 };
 
 

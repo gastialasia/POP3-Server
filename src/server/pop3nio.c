@@ -80,12 +80,12 @@ static const struct fd_handler pop3_handler = {
 static void
 auth_init(const unsigned state, struct selector_key *key)
 {
-    struct auth_st *d = &ATTACHMENT(key)->client.auth;
+    struct state_st *d = &ATTACHMENT(key)->state;
     d->rb = &(ATTACHMENT(key)->read_buffer);
     d->wb = &(ATTACHMENT(key)->write_buffer);
     d->parser = ATTACHMENT(key)->parser;
 }
-
+/*
 static unsigned auth_read(struct selector_key *key)
 {
     struct auth_st *d = &ATTACHMENT(key)->client.auth;
@@ -122,11 +122,49 @@ static unsigned auth_read(struct selector_key *key)
     //return error ? ERROR : curr_state;
     return curr_state;
 }
+*/
 
-static unsigned auth_write(struct selector_key *key) { // key corresponde a un client_fd
-    struct auth_st *d = &ATTACHMENT(key)->client.auth;
+static unsigned client_read(struct selector_key *key)
+{
+    struct state_st *d = &ATTACHMENT(key)->state;
+    unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
+    //bool error = false;
+    uint8_t *ptr;
+    size_t count;
+    ssize_t n;
+    fn_type command_handler;
 
-    unsigned ret = 0;
+    ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
+    n = recv(key->fd, ptr, count, 0);
+    if (n > 0){
+        buffer_write_adv(d->rb, n);    //Buffer: CAPA\r\n . CAPA\r\n
+        while(buffer_can_read(d->rb)) {
+            const uint8_t c = buffer_read(d->rb);
+            parser_feed(d->parser, c);
+            struct parser_event * pe = get_last_event(d->parser);
+            //funcion para fijarnos si termino de pasear
+            if (pe->complete) {
+                if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
+                    command_handler = comparator(pe, curr_state); //Esto tiene que devolver el estado grande al que vamos.
+                    curr_state = command_handler(d->wb, ATTACHMENT(key), pe->commands[1], pe->commands[2]);
+                    restart_tokenizer(pe);
+                } else {
+                    curr_state = ERROR; //Si dio el selector
+                }
+            }
+        }
+    } else {
+        curr_state = ERROR; // Si dio error el recv
+    }
+
+    //return error ? ERROR : curr_state;
+    return curr_state;
+}
+
+static unsigned client_write(struct selector_key *key) { // key corresponde a un client_fd
+    struct state_st *d = &ATTACHMENT(key)->state;
+
+    unsigned ret = ATTACHMENT(key)->stm.current->state;
     uint8_t  *ptr;
     size_t   count;
     ssize_t  n;
@@ -142,7 +180,7 @@ static unsigned auth_write(struct selector_key *key) { // key corresponde a un c
         if (!buffer_can_read(d->wb)) {
             if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_READ)) {
                 // en caso de que haya fallado el handshake del hello, el cliente es el que cerrara la conexion
-                ret = AUTH;//is_auth_on ? AUTH_READ : REQUEST_READ;
+                //ret = AUTH;//is_auth_on ? AUTH_READ : REQUEST_READ;
             } else {
                 ret = ERROR;
             }
@@ -159,7 +197,7 @@ static void empty_function(const unsigned state, struct selector_key *key){
 }
 
 static unsigned empty_function2(struct selector_key *key){
-    return 0;
+    return 1;
 }
 
 static void print_current_state(const unsigned state, struct selector_key *key){
@@ -172,15 +210,15 @@ static const struct state_definition client_statbl[] = {
     {
         .state = AUTH,
         .on_arrival = auth_init, //Inicializar los parsers
-        .on_read_ready = auth_read, //Se hace la lectura
-        .on_write_ready = auth_write,//auth_write,
+        .on_read_ready = client_read, //Se hace la lectura
+        .on_write_ready = client_write,//auth_write,
     },
     {
         .state = TRANSACTION,
         .on_arrival = print_current_state,
         .on_departure = empty_function,
-        .on_read_ready = empty_function2,
-        .on_write_ready = empty_function2,
+        .on_read_ready = client_read,
+        .on_write_ready = client_write,
     },
     {
         .state = UPDATE,

@@ -117,7 +117,7 @@ struct selector_key {
     /** el file descriptor en cuestión */
     int fd;//File descriptor del socket
     /** dato provisto por el usuario */
-    void * data;
+    void * data; //aca guardamos una estructura pop3
 };
 
 /**

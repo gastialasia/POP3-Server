@@ -5,6 +5,10 @@
 #include <stdlib.h>
 
 #define AUTH_COMMAND_QTY 4
+#define TR_COMMAND_QTY 8
+
+#define STATE_QTY 2
+
 #define COMMAND_LEN 5
 
 #define CAPA_MSG "+OK\nCAPA\nUSER\nPIPELINING\n.\r\n"
@@ -23,10 +27,6 @@ typedef struct{
     fn_type command_handler;
 } command_type;
 
-unsigned int noop(){
-    printf("Func blanca\n");
-    return 0;
-}
 
 static command_type auth_commands[AUTH_COMMAND_QTY] = {
     {.command_id = "CAPA", .command_handler = &capa_handler},
@@ -34,6 +34,20 @@ static command_type auth_commands[AUTH_COMMAND_QTY] = {
     {.command_id = "PASS", .command_handler = &pass_handler},
     {.command_id = "QUIT", .command_handler = &noop},
 };
+
+static command_type transaction_commands[TR_COMMAND_QTY] = {
+    {.command_id = "NOOP", .command_handler = &noop},
+    {.command_id = "STAT", .command_handler = &noop},
+    {.command_id = "LIST", .command_handler = &noop},
+    {.command_id = "RETR", .command_handler = &noop},
+    {.command_id = "DELE", .command_handler = &noop},
+    {.command_id = "RSET", .command_handler = &noop},
+    {.command_id = "CAPA", .command_handler = &noop},
+    {.command_id = "QUIT", .command_handler = &noop},
+};
+
+static command_type* commands_per_state[STATE_QTY] = {auth_commands, transaction_commands};
+static int qty_per_state[STATE_QTY] = {AUTH_COMMAND_QTY, TR_COMMAND_QTY};
 
 unsigned int write_to_buffer(char * str, buffer *b){
     size_t count;
@@ -52,6 +66,11 @@ int validate_credentials(struct pop3 * p3, char * pass){
     return !strcmp(p3->credentials->user, TEST_USER) && !strcmp(pass, TEST_PASS);
 }
 
+unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2){
+    write_to_buffer(POSITIVE_MSG, b);
+    return p3->stm.current->state;
+}
+
 unsigned int capa_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
     //Falta if para elegir mensaje segun el estado
     write_to_buffer(CAPA_MSG, b);
@@ -61,7 +80,7 @@ unsigned int capa_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
 unsigned int invalid_command_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
     write_to_buffer(INVALID_COMMAND_MSG, b);
     //Falta if
-    return AUTH; 
+    return p3->stm.current->state; 
 }
 
 unsigned int user_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
@@ -94,13 +113,16 @@ unsigned int pass_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
 }
 
 fn_type comparator(struct parser_event * pe, unsigned int curr_state){
+    printf("el current state es: %u\n", curr_state);
     char * command = pe->commands[0];
-    //command_type curr_command;
+    command_type* command_list = commands_per_state[curr_state];
+    int command_qty = qty_per_state[curr_state];
+    command_type curr_command;
     //void * ret = &blank_function; // Funcion de error por default
-    for(int i=0; i<AUTH_COMMAND_QTY; i++){
-        //curr_command = auth_commands[i];
-        if (!strcmp(auth_commands[i].command_id, command)){
-            return auth_commands[i].command_handler;
+    for(int i=0; i<command_qty; i++){
+        curr_command = command_list[i];
+        if (!strcmp(curr_command.command_id, command)){
+            return curr_command.command_handler;
         }
     }
     return &invalid_command_handler;
