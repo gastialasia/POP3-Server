@@ -8,6 +8,6 @@
 
 DIR* open_maildir(struct pop3* p3, char* path);
 
-char* read_mail(DIR* directory);
+char* read_mail(DIR* directory, struct pop3* p3, char* path);
 
 #endif
