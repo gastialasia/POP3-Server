@@ -49,7 +49,7 @@ static command_type transaction_commands[TR_COMMAND_QTY] = {
     {.command_id = "LIST", .command_handler = &list_handler},
     {.command_id = "RETR", .command_handler = &noop},
     {.command_id = "DELE", .command_handler = &noop},
-    {.command_id = "RSET", .command_handler = &noop},
+    {.command_id = "RSET", .command_handler = &rset_handler},
     {.command_id = "CAPA", .command_handler = &noop},
     {.command_id = "QUIT", .command_handler = &noop},
 };
@@ -82,6 +82,14 @@ int validate_credentials(struct pop3 * p3, char * pass){
 unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2){
     //printf("%s\n", read_mail(open_maildir(p3, INITIAL_PATH), p3, INITIAL_PATH));
     load_mails(p3);
+    return p3->stm.current->state;
+}
+
+unsigned int rset_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
+    struct mail_t** aux = p3->mails;
+    for(int i=0; i<p3->mail_qty; i++){
+        aux[i]->marked_del = 0;
+    }
     return p3->stm.current->state;
 }
 
