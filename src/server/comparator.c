@@ -19,6 +19,9 @@
 #define INVALID_COMMAND_MSG "-ERR Unknown command.\r\n"
 #define PASS_NOUSER_MSG "-ERR No username given.\r\n"
 #define AUTH_ERROR_MSG "-ERR [AUTH] Authentication failed.\r\n"
+#define INVALID_INDEX_MSG "-ERR Invalid message number\n"
+#define NO_MSG_MSG "-ERR No such message\n"
+#define LIST_FMT "+OK %u messages (%ld octets)\n"
 #define LOGIN_MSG "+OK Logged in.\r\n"
 #define STAT_FMT "+OK %u %ld\n"
 #define POSITIVE_MSG "+OK\n"
@@ -89,18 +92,18 @@ unsigned int list_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
     if(arg1 != NULL){
         unsigned int index = atoi(arg1);
         if (index==0){
-            write_to_buffer("-ERR Invalid message number\n", b); //Crear define
+            write_to_buffer(INVALID_INDEX_MSG, b); //Crear define
             return TRANSACTION;
         }
         if (index > p3->mail_qty){
-            write_to_buffer("-ERR No such message\n", b); //Crear define
+            write_to_buffer(NO_MSG_MSG, b); //Crear define
             return TRANSACTION;
         }
         sprintf(list_msg, STAT_FMT, index, p3->mails[index-1]->size);  //Si me pasan 1, quiero mails[0]
         write_to_buffer(list_msg, b);
     } else {
         //LIST sin argumentos
-        sprintf(list_msg, "+OK %u messages (%ld octets)\n", p3->mail_qty, p3->total_octates); 
+        sprintf(list_msg, LIST_FMT, p3->mail_qty, p3->total_octates); 
         write_to_buffer(list_msg, b);
         unsigned int i;
         for(i=0; i < p3->mail_qty; i++){

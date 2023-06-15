@@ -9,6 +9,7 @@
 
 
 enum monitor_state {
+  //Parsing states
   monitor_version,
   monitor_token,
   monitor_method,
@@ -96,9 +97,5 @@ struct monitor_parser {
   uint16_t len; //bytes que tiene que leer
   uint16_t read; // bytes ya leidos
 };
-
-
-
-
 
 #endif // !MONITOR_H
