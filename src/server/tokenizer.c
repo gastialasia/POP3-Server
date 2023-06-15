@@ -161,7 +161,13 @@ void store_second_arg(struct parser_event *event, const uint8_t c)
 
 void restart_tokenizer(struct parser_event * pe) {
     pe->complete = 0;
-    for(int i=0; i<10; i++) {
-        pe->commands[0][i]=0;
+    /*for(int i=0; i<2; i++){
+        for(int j=0; j<10; j++) {
+            pe->commands[i][j]=0;
+        }
+    }*/
+    for(int i=0; i<3; i++) {
+        free(pe->commands[i]);
+        pe->commands[i]=NULL;
     }
 }

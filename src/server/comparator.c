@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+
 #define AUTH_COMMAND_QTY 4
 #define TR_COMMAND_QTY 8
 
@@ -42,7 +43,7 @@ static command_type auth_commands[AUTH_COMMAND_QTY] = {
 static command_type transaction_commands[TR_COMMAND_QTY] = {
     {.command_id = "NOOP", .command_handler = &noop},
     {.command_id = "STAT", .command_handler = &stat_handler},
-    {.command_id = "LIST", .command_handler = &noop},
+    {.command_id = "LIST", .command_handler = &list_handler},
     {.command_id = "RETR", .command_handler = &noop},
     {.command_id = "DELE", .command_handler = &noop},
     {.command_id = "RSET", .command_handler = &noop},
@@ -79,6 +80,19 @@ unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2){
     //printf("%s\n", read_mail(open_maildir(p3, INITIAL_PATH), p3, INITIAL_PATH));
     load_mails(p3);
     return p3->stm.current->state;
+}
+
+unsigned int list_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
+    //Falta if para elegir mensaje segun el estado
+    printf("el arg1 %s NULL\n", arg1 == NULL?"es":"no es");
+    if(arg1 != NULL){
+        int mail_index = atoi(arg1);
+        //chequear la respuesta del atoi
+        char stat_msg[40];
+        sprintf(stat_msg, STAT_FMT, p3->mail_qty, p3->total_octates); 
+         write_to_buffer(stat_msg, b);
+    }
+    return TRANSACTION;
 }
 
 unsigned int stat_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
