@@ -270,7 +270,7 @@ static struct pop3 *pop3_new(int client_fd)
     ret->stm.states = pop3_describe_states();
     ret->credentials = malloc(sizeof(struct credentials_t));
     ret->parser = create_parser();
-    ret->inbox = init_array();
+    ret->mails = malloc(BLOCK*sizeof(struct mail_t*));
     stm_init(&ret->stm);
 
     buffer_init(&ret->read_buffer, N(ret->raw_buff_a), ret->raw_buff_a);

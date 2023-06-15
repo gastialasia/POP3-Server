@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "../include/email.h"
+#include "../include/email.h"
 #define CUR "/cur/"
 
 
@@ -27,6 +28,7 @@ char* read_mail(DIR* directory, struct pop3* p3, char* path){
         d = readdir(directory);
     }
         
+
     //Creamos el path al archivo de mail
     size_t user_len = strlen(p3->credentials->user);
     size_t path_len = strlen(path); 
@@ -46,7 +48,7 @@ char* read_mail(DIR* directory, struct pop3* p3, char* path){
     return buf;
 }
 
-void load_mails(struct pop3* p3) {
+void get_all_mails(struct pop3 * p3) {
     DIR * directory = open_maildir(p3, INITIAL_PATH);
     struct dirent * d;
     size_t index = 0;
@@ -76,7 +78,7 @@ void load_mails(struct pop3* p3) {
 
             new->size = file_info.st_size; //Aca hay que hacer stat
             printf("%ld\n",file_info.st_size);
-            add_mail(p3->inbox, new);
+            p3->mails[index++] = new; //Guardo mail en el array de mails
         }
     }
 }
