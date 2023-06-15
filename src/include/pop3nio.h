@@ -48,13 +48,6 @@ struct state_st{
     struct parser * parser;
 };
 
-//Estructura para procesar mails al entrar al pasar a TRANSACTION
-struct mail_t{
-    char * filename;
-    char marked_del; //flag para borrar el mail
-    size_t size;
-};
-
 struct pop3
 {
     /** maquinas de estados */
@@ -69,7 +62,7 @@ struct pop3
 
     struct credentials_t * credentials;
 
-    struct mail_t* mails;
+    struct mail_t ** mails;
 
     struct parser * parser;
     
