@@ -51,14 +51,13 @@ char* read_mail(DIR* directory, struct pop3* p3, char* path){
 void load_mails(struct pop3 * p3) {
     DIR * directory = open_maildir(p3, INITIAL_PATH);
     struct dirent * d = readdir(directory);
+    struct stat file_statistics;
     while(d != NULL){
         if (strcmp(d->d_name,".") && strcmp(d->d_name,"..")){
-            printf("Cargando mail (%s): %s\n",p3->credentials->user,d->d_name);
             struct mail_t * new = malloc(sizeof(struct mail_t)); //Creamos mail
             new->filename = NULL; //Por ahora no lo necesitamos
             new->marked_del = 0;
-
-            struct stat file_info;
+            
             //MODULARIZAR
             size_t user_len = strlen(p3->credentials->user);
             size_t path_len = strlen(INITIAL_PATH); 
@@ -68,12 +67,19 @@ void load_mails(struct pop3 * p3) {
             strncat(mail_path, p3->credentials->user, user_len);
             strcat(mail_path, CUR);
             strcat(mail_path, d->d_name);
-            //Termina modularizacion
-            stat(mail_path, &file_info);
 
-            new->size = file_info.st_size; //Aca hay que hacer stat
-            printf("%ld\n",file_info.st_size);
+            if(stat(mail_path, &file_statistics)){ //Si sale mal, stat devuelve algo distinto de 0 y entonces entro
+                //Manejar el error
+            }
+
+            //cargamos el mail en cuestion
+            printf("Cargando mail (%s): %s\n",p3->credentials->user,d->d_name);
+            new->size = file_statistics.st_size; //Aca hay que hacer stat
             p3->mails[p3->mail_qty++] = new; //Guardo mail en el array de mails
+        
+            //añadimos la cantidad de bytes del mail al total del inbox
+            
+            p3->total_octates += file_statistics.st_size;
         }
         d = readdir(directory);
     }

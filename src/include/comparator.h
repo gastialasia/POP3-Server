@@ -17,6 +17,9 @@ unsigned int pass_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2);
 
 unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2);
 
+unsigned int stat_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2);
+
 fn_type comparator(struct parser_event * pe, unsigned int curr_state);
+
 
 #endif 

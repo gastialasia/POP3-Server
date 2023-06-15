@@ -19,6 +19,7 @@
 #define PASS_NOUSER_MSG "-ERR No username given.\r\n"
 #define AUTH_ERROR_MSG "-ERR [AUTH] Authentication failed.\r\n"
 #define LOGIN_MSG "+OK Logged in.\r\n"
+#define STAT_FMT "+OK %u %ld\n"
 #define POSITIVE_MSG "+OK\n"
 #define NEGATIVE_MSG "-ERR\n"
 
@@ -40,7 +41,7 @@ static command_type auth_commands[AUTH_COMMAND_QTY] = {
 
 static command_type transaction_commands[TR_COMMAND_QTY] = {
     {.command_id = "NOOP", .command_handler = &noop},
-    {.command_id = "STAT", .command_handler = &noop},
+    {.command_id = "STAT", .command_handler = &stat_handler},
     {.command_id = "LIST", .command_handler = &noop},
     {.command_id = "RETR", .command_handler = &noop},
     {.command_id = "DELE", .command_handler = &noop},
@@ -78,6 +79,14 @@ unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2){
     //printf("%s\n", read_mail(open_maildir(p3, INITIAL_PATH), p3, INITIAL_PATH));
     load_mails(p3);
     return p3->stm.current->state;
+}
+
+unsigned int stat_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
+    //Falta if para elegir mensaje segun el estado
+    char stat_msg[40];
+    sprintf(stat_msg, STAT_FMT, p3->mail_qty, p3->total_octates); 
+    write_to_buffer(stat_msg, b);
+    return TRANSACTION;
 }
 
 unsigned int capa_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {

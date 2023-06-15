@@ -20,6 +20,7 @@
 #include "../include/parser.h"
 #include "../include/tokenizer.h"
 #include "../include/comparator.h"
+#include "../include/email.h"
 
 #define N(x) (sizeof(x) / sizeof((x)[0]))
 #define BLOCK 5
@@ -78,44 +79,13 @@ auth_init(const unsigned state, struct selector_key *key)
     d->wb = &(ATTACHMENT(key)->write_buffer);
     d->parser = ATTACHMENT(key)->parser;
 }
-/*
-static unsigned auth_read(struct selector_key *key)
+
+static void
+trans_init(const unsigned state, struct selector_key *key)
 {
-    struct auth_st *d = &ATTACHMENT(key)->client.auth;
-    unsigned int curr_state = AUTH;
-    //bool error = false;
-    uint8_t *ptr;
-    size_t count;
-    ssize_t n;
-    fn_type command_handler;
-
-    ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
-    n = recv(key->fd, ptr, count, 0);
-    if (n > 0){
-        buffer_write_adv(d->rb, n);    //Buffer: CAPA\r\n . CAPA\r\n
-        while(buffer_can_read(d->rb)) {
-            const uint8_t c = buffer_read(d->rb);
-            parser_feed(d->parser, c);
-            struct parser_event * pe = get_last_event(d->parser);
-            //funcion para fijarnos si termino de pasear
-            if (pe->complete) {
-                if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
-                    command_handler = comparator(pe, curr_state); //Esto tiene que devolver el estado grande al que vamos.
-                    curr_state = command_handler(d->wb, ATTACHMENT(key), pe->commands[1], pe->commands[2]);
-                    restart_tokenizer(pe);
-                } else {
-                    curr_state = ERROR; //Si dio el selector
-                }
-            }
-        }
-    } else {
-        curr_state = ERROR; // Si dio error el recv
-    }
-
-    //return error ? ERROR : curr_state;
-    return curr_state;
+    struct pop3* p3 = ATTACHMENT(key);
+    load_mails(p3);
 }
-*/
 
 static unsigned client_read(struct selector_key *key)
 {
@@ -193,9 +163,9 @@ static unsigned empty_function2(struct selector_key *key){
     return 1;
 }
 
-static void print_current_state(const unsigned state, struct selector_key *key){
+/*static void print_current_state(const unsigned state, struct selector_key *key){
     printf("LLegue a transaction\n");
-}
+}*/
 
 
 /** definición de handlers para cada estado */
@@ -208,7 +178,7 @@ static const struct state_definition client_statbl[] = {
     },
     {
         .state = TRANSACTION,
-        .on_arrival = print_current_state,
+        .on_arrival = trans_init,
         .on_departure = empty_function,
         .on_read_ready = client_read,
         .on_write_ready = client_write,

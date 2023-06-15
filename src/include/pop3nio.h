@@ -28,21 +28,6 @@ struct credentials_t {
     char * pass;
 };
 
-/*struct auth_st
-{
-    //buffer utilizado para I/O
-    buffer *rb, *wb;
-    struct parser * parser;
-};
-
-struct trans_st
-{
-    buffer *rb, *wb;
-    struct parser * parser;
-
-};
-*/
-
 struct state_st{
     buffer *rb, *wb;
     struct parser * parser;
@@ -61,6 +46,9 @@ struct pop3
     buffer read_buffer, write_buffer;
 
     struct credentials_t * credentials;
+
+    //suma de la cantidad total de bytes entre todos los mails cargados en inbox
+    size_t total_octates;
 
     unsigned mail_qty;
 
