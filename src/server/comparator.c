@@ -76,7 +76,7 @@ int validate_credentials(struct pop3 * p3, char * pass){
 
 unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2){
     //printf("%s\n", read_mail(open_maildir(p3, INITIAL_PATH), p3, INITIAL_PATH));
-    get_all_mails(p3);
+    load_mails(p3);
     return p3->stm.current->state;
 }
 

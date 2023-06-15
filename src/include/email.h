@@ -17,6 +17,7 @@ DIR* open_maildir(struct pop3* p3, char* path);
 
 char* read_mail(DIR* directory, struct pop3* p3, char* path);
 
-void get_all_mails(struct pop3 * p3);
+//Carga los mails en la estructura pop3
+void load_mails(struct pop3 * p3);
 
 #endif

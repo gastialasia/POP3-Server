@@ -62,19 +62,14 @@ struct pop3
 
     struct credentials_t * credentials;
 
+    unsigned mail_qty;
+
     struct mail_t ** mails;
 
     struct parser * parser;
     
     struct pop3 *next;
 
-    /** estados para el client_fd 
-    union
-    {
-        struct auth_st auth;
-        struct trans_st trans;
-    } client;
-    */
    struct state_st state;
 };
 

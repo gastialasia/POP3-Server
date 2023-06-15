@@ -48,15 +48,10 @@ char* read_mail(DIR* directory, struct pop3* p3, char* path){
     return buf;
 }
 
-void get_all_mails(struct pop3 * p3) {
+void load_mails(struct pop3 * p3) {
     DIR * directory = open_maildir(p3, INITIAL_PATH);
-    struct dirent * d;
-    size_t index = 0;
-    while(1){
-        d = readdir(directory);
-        if (d == NULL){
-            break;
-        }
+    struct dirent * d = readdir(directory);
+    while(d != NULL){
         if (strcmp(d->d_name,".") && strcmp(d->d_name,"..")){
             printf("Cargando mail (%s): %s\n",p3->credentials->user,d->d_name);
             struct mail_t * new = malloc(sizeof(struct mail_t)); //Creamos mail
@@ -78,7 +73,8 @@ void get_all_mails(struct pop3 * p3) {
 
             new->size = file_info.st_size; //Aca hay que hacer stat
             printf("%ld\n",file_info.st_size);
-            p3->mails[index++] = new; //Guardo mail en el array de mails
+            p3->mails[p3->mail_qty++] = new; //Guardo mail en el array de mails
         }
+        d = readdir(directory);
     }
 }
