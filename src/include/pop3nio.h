@@ -6,6 +6,7 @@
 #include "stm.h"
 #include "buffer.h"
 #include "parser.h"
+#include "array.h"
 
 #define INITIAL_PATH "./directories/"
 
@@ -28,21 +29,6 @@ struct credentials_t {
     char * pass;
 };
 
-/*struct auth_st
-{
-    //buffer utilizado para I/O
-    buffer *rb, *wb;
-    struct parser * parser;
-};
-
-struct trans_st
-{
-    buffer *rb, *wb;
-    struct parser * parser;
-
-};
-*/
-
 struct state_st{
     buffer *rb, *wb;
     struct parser * parser;
@@ -62,23 +48,14 @@ struct pop3
 
     struct credentials_t * credentials;
 
-    struct mail_t ** mails;
+    mail_array inbox;
 
     struct parser * parser;
-    
+
+    struct state_st state;
+
     struct pop3 *next;
-
-    /** estados para el client_fd 
-    union
-    {
-        struct auth_st auth;
-        struct trans_st trans;
-    } client;
-    */
-   struct state_st state;
 };
-
-
 
 void pop3_passive_accept(struct selector_key *key);
 
