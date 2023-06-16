@@ -98,6 +98,7 @@ unsigned int retr_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
             write_to_buffer(ALREADY_DELE_MSG, b);
             return TRANSACTION;
         }
+        printf("estoy en el handler\n");
         write_to_buffer(POSITIVE_MSG, b);
         p3->selected_mail = index-1;
         return READING_MAIL;

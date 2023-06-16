@@ -92,12 +92,14 @@ trans_init(const unsigned state, struct selector_key *key)
     }
 }
 
-/*static void reading_init(const unsigned state, struct selector_key *key){
+static void reading_init(const unsigned state, struct selector_key *key){
     struct reading_st *d = &ATTACHMENT(key)->client.reading;
     d->rb = &(ATTACHMENT(key)->read_buffer);
     d->wb = &(ATTACHMENT(key)->write_buffer);
+    //buffer_reset(d->rb);
+    //buffer_reset(d->wb);
     //inicializar flags
-}*/
+}
 
 static unsigned client_read(struct selector_key *key)
 {
@@ -167,15 +169,12 @@ static unsigned client_write(struct selector_key *key) { // key corresponde a un
     return ret;
 }
 
-static void filesystem_read(const unsigned state, struct selector_key *key)
+static unsigned filesystem_read(struct selector_key *key)
 {
-    struct reading_st *d = &ATTACHMENT(key)->client.reading;
-    d->rb = &(ATTACHMENT(key)->read_buffer);
-    d->wb = &(ATTACHMENT(key)->write_buffer);
     printf("llegue a la funcion\n");
     struct pop3* p3 = ATTACHMENT(key);
-    //struct reading_st *d = &ATTACHMENT(key)->client.reading;
-    //unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
+    struct reading_st *d = &ATTACHMENT(key)->client.reading;
+    unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
     //bool error = false;
     uint8_t *ptr;
     size_t count;
@@ -184,6 +183,7 @@ static void filesystem_read(const unsigned state, struct selector_key *key)
     ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
     int fd = open(p3->mails[p3->selected_mail]->file_path, O_RDONLY);
     //hacerlo no bloqueante con fcntl
+    
     if(fd<0){
         printf("error abriendo el file descriptor\n");
         //return ERROR;
@@ -191,24 +191,23 @@ static void filesystem_read(const unsigned state, struct selector_key *key)
     n = read(fd, ptr, count);
     if (n > 0){
         buffer_write_adv(d->rb, n);
-        //BYTE STUFFING
-        while(buffer_can_read(d->rb)) {
-            const uint8_t c = buffer_read(d->rb);
-            putchar(c);
-            if(c == '.'){
-                //curr_state = TRANSACTION;
-                break;
-            } 
+        if(SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
+            //BYTE STUFFING
+            while(buffer_can_read(d->rb)) {
+                const uint8_t c = buffer_read(d->rb);
+                buffer_write(d->wb, c);
+                if(c == '.'){
+                    //curr_state = TRANSACTION;
+                    break;
+                } 
+            }
         }
-        send(key->fd, ptr, count, MSG_NOSIGNAL);
-    } /*else {
+    } else {
         curr_state = ERROR; // Si dio error el recv
-    }*/
-    buffer_reset(d->rb);
-    buffer_reset(d->wb);
+    }
 
     //return error ? ERROR : curr_state;
-    //return curr_state;
+    return curr_state;
 }
 
 static void empty_function(const unsigned state, struct selector_key *key){
@@ -242,10 +241,10 @@ static const struct state_definition client_statbl[] = {
     },
     {
         .state = READING_MAIL,
-        .on_arrival = filesystem_read,
+        .on_arrival = reading_init,
         .on_departure = empty_function,
-        .on_read_ready = empty_function2,
-        .on_write_ready = empty_function2,
+        .on_read_ready = filesystem_read,
+        .on_write_ready = client_write,
     },
     {
         .state = UPDATE,
