@@ -83,4 +83,6 @@ void load_mails(struct pop3 * p3) {
         }
         d = readdir(directory);
     }
+    p3->max_index = p3->mail_qty-1;
+    p3->original_total_octates = p3->total_octates;
 }

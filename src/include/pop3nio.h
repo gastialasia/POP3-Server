@@ -50,7 +50,11 @@ struct pop3
     //suma de la cantidad total de bytes entre todos los mails cargados en inbox
     size_t total_octates;
 
+    size_t original_total_octates;
+
     unsigned mail_qty;
+
+    unsigned max_index;
 
     struct mail_t ** mails;
 
@@ -60,8 +64,6 @@ struct pop3
 
    struct state_st state;
 };
-
-
 
 void pop3_passive_accept(struct selector_key *key);
 
