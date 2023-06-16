@@ -98,4 +98,9 @@ struct monitor_parser {
   uint16_t read; // bytes ya leidos
 };
 
+// Init del parser
+void monitor_init_parser(struct monitor_parser *p);
+
+
+
 #endif // !MONITOR_H

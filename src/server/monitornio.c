@@ -3,6 +3,7 @@
 #include "../include/pop3nio.h"
 #include "../include/selector.h"
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -26,9 +27,9 @@ struct admin_connection{
 
   struct admin_connection *next;
 };
-
-static const unsigned           max_pool = 3;
-static unsigned                 pool_size = 0;
+// TODO:@pato descomentar esto cuando destruyamos cosas
+// static const unsigned           max_pool = 3;
+// static unsigned                 pool_size = 0;
 static struct admin_connection *pool = 0;
 
 
@@ -88,7 +89,7 @@ static void monitor_init(struct admin_connection * admin_connection){
   d->wb                = &(admin_connection->write_buffer);
   d->parser.monitor    = &d->monitor;
   d->status            = monitor_status_unknown_error;
-  monitor_parser_init(&d->parser);
+  monitor_init_parser(&d->parser);
 }
 
 void monitor_passive_accept(struct selector_key * key){
@@ -122,8 +123,50 @@ fail:
 
 }
 
+static void monitor_read(struct selector_key * key){
+  struct monitor_st *d = &ATTACHMENT(key)->request;
+  
+  buffer *b =d->rb;
+  uint8_t *ptr;
+  size_t count;
+  ssize_t n;
 
 
+  ptr = buffer_write_ptr(b, &count);
+  n = recv(key->fd, ptr, count, 0);
+
+  if(n <= 0){
+     //TODO: TERMINO 
+  }else {
+    
+  }
+
+}
 
 
+static void monitor_write(struct selector_key * key){
+  struct monitor_st *d = &ATTACHMENT(key)->request;
+
+  buffer *b = d->wb;
+  uint8_t *ptr;
+  size_t count;
+  ssize_t n;
+  
+
+  ptr = buffer_read_ptr(b, &count);
+  n = send(key->fd, ptr, count, MSG_NOSIGNAL);
+
+  if(n == -1){
+    //finish
+  }else {
+    buffer_read_adv(b, n);
+      if(!buffer_can_read(b)){
+        //termino de leer, ceramos la con
+      }
+  }
+}
+
+static void monitor_close(struct selector_key * key){
+  //destruimos la conexion?
+}
 
