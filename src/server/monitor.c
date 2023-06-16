@@ -1,12 +1,10 @@
+#include <string.h>
 #include "../include/monitor.h"
-#include "../include/buffer.h"
 
 
-struct monitor_st {
-  buffer                *rb,*wb;
-  struct monitor        monitor;
-  struct monitor_parser parser;
-  enum response_code_status status;
-};
+extern void monitor_init_parser(struct monitor_parser *p){
+  p->state = monitor_version;
+  memset(p->monitor,0, sizeof(*(p->monitor)));
+}
 
 
