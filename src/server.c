@@ -157,8 +157,6 @@ finally:
     }
     selector_close();
 
-    //pop3_pool_destroy();
-
     if(server >= 0) {
         close(server);
     }

@@ -87,7 +87,7 @@ unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2){
 
 unsigned int rset_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
     struct mail_t** aux = p3->mails;
-    for(int i=0; i<p3->mail_qty; i++){
+    for(unsigned int i=0; i < p3->mail_qty; i++){
         aux[i]->marked_del = 0;
     }
     return p3->stm.current->state;

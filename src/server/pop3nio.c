@@ -43,8 +43,9 @@ char* path_to_maildir = INITIAL_PATH;
 /** realmente destruye */
 static void pop3_destroy(struct pop3 *s)
 {
-    //Liberar cada cliente
-    //liberar bien todos los recursos
+    free(s->credentials);
+    parser_destroy(s->parser);
+    free(s->mails);
     free(s);
     connections--;
 }
@@ -287,7 +288,7 @@ fail:
     {
         close(client);
     }
-    //pop3_destroy(state);
+    pop3_destroy(state);
 }
 
 static void

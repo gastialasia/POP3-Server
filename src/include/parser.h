@@ -87,4 +87,6 @@ parser_no_classes(void);
 
 struct parser_event * get_last_event(struct parser *p);
 
+void free_parser_events_rec(struct parser_event * pe);
+
 #endif

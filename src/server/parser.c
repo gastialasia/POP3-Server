@@ -4,6 +4,7 @@
 #include <string.h>
 #include <assert.h>
 #include "../include/parser.h"
+#include "../include/tokenizer.h"
 
 /* CDT del parser */
 struct parser
@@ -22,8 +23,8 @@ struct parser
 
 void parser_destroy(struct parser *p)
 {
-    if (p != NULL)
-    {
+    free_parser_events_rec(&p->e1); //No esta cambiando nada
+    if (p!=NULL){
         free(p);
     }
 }
@@ -102,6 +103,14 @@ const unsigned *
 parser_no_classes(void)
 {
     return classes;
+}
+
+void free_parser_events_rec(struct parser_event * pe){
+    if(pe->next==NULL){
+        return;
+    }
+    free_parser_events_rec(pe->next);
+    free(pe);
 }
 
 

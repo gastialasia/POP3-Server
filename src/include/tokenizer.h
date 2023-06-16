@@ -32,4 +32,6 @@ void store_second_arg(struct parser_event *event, const uint8_t c);
 
 void restart_tokenizer(struct parser_event * pe);
 
+void free_commands_array(struct parser_event * pe);
+
 #endif
