@@ -50,7 +50,7 @@ static command_type transaction_commands[TR_COMMAND_QTY] = {
     {.command_id = "NOOP", .command_handler = &noop},
     {.command_id = "STAT", .command_handler = &stat_handler},
     {.command_id = "LIST", .command_handler = &list_handler},
-    {.command_id = "RETR", .command_handler = &noop},
+    {.command_id = "RETR", .command_handler = &retr_handler},
     {.command_id = "DELE", .command_handler = &dele_handler},
     {.command_id = "RSET", .command_handler = &rset_handler},
     {.command_id = "CAPA", .command_handler = &trans_capa_handler},
@@ -78,6 +78,11 @@ int validate_credentials(struct pop3 * p3, char * pass){
 }
 
 unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2){
+    write_to_buffer(POSITIVE_MSG, b);
+    return p3->stm.current->state;
+}
+
+unsigned int retr_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
     write_to_buffer(POSITIVE_MSG, b);
     return p3->stm.current->state;
 }
