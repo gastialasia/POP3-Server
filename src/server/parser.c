@@ -21,6 +21,10 @@ struct parser
     struct parser_event e1;
 };
 
+void set_parser_event_buf(struct parser *p, buffer* b){
+    p->e1.b = b;
+}
+
 void parser_destroy(struct parser *p)
 {
     free_parser_events_rec(&p->e1); //No esta cambiando nada

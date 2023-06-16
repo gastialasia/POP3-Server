@@ -17,6 +17,7 @@ enum pop3state
 {
     AUTH, //Se mueve a AUTH o ERROR
     TRANSACTION, // Se mueve a QUIT, ERROR o TRANSACTION
+    READING_MAIL, //byte stuffing state
     UPDATE,
     // estados terminales
     DONE,
@@ -56,9 +57,13 @@ struct pop3
 
     unsigned max_index;
 
+    unsigned selected_mail;
+
     struct mail_t ** mails;
 
     struct parser * parser;
+
+    struct parser * mail_parser;
     
     struct pop3 *next;
 

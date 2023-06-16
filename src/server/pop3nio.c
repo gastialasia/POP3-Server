@@ -9,7 +9,9 @@
 #include <time.h>
 #include <unistd.h> // close
 #include <pthread.h>
-
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <arpa/inet.h>
 
 #include "../include/hello.h"
@@ -19,6 +21,7 @@
 
 #include "../include/parser.h"
 #include "../include/tokenizer.h"
+#include "../include/mail_tokenizer.h"
 #include "../include/comparator.h"
 #include "../include/email.h"
 
@@ -85,7 +88,20 @@ static void
 trans_init(const unsigned state, struct selector_key *key)
 {
     struct pop3* p3 = ATTACHMENT(key);
-    load_mails(p3);
+    if(p3->mails == NULL) //revisar: esto es para cuando volvemos de reading a transaction
+        load_mails(p3);
+}
+
+static void
+reading_init(const unsigned state, struct selector_key *key)
+{
+    struct pop3* p3 = ATTACHMENT(key);
+    if(p3->mail_parser == NULL){
+        p3->mail_parser = create_mail_parser();
+    }
+    struct state_st *d = &ATTACHMENT(key)->state;
+    d->parser = p3->mail_parser;
+    set_parser_event_buf(d->parser, d->wb);
 }
 
 static unsigned client_read(struct selector_key *key)
@@ -116,6 +132,50 @@ static unsigned client_read(struct selector_key *key)
                     curr_state = ERROR; //Si dio el selector
                 }
             }
+        }
+    } else {
+        curr_state = ERROR; // Si dio error el recv
+    }
+
+    //return error ? ERROR : curr_state;
+    return curr_state;
+}
+
+static unsigned filesystem_read(struct selector_key *key)
+{
+    struct pop3* p3 = ATTACHMENT(key);
+    struct state_st *d = &p3->state;
+    unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
+    //bool error = false;
+    uint8_t *ptr;
+    size_t count;
+    ssize_t n;
+
+    ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
+    int fd = open(p3->mails[p3->selected_mail]->file_path, O_RDONLY);
+    //hacerlo no bloqueante con fcntl
+    if(fd<0){
+        printf("error abriendo el file descriptor\n");
+        return ERROR;
+    }
+    n = read(fd, ptr, count);
+    if (n > 0){
+        buffer_write_adv(d->rb, n);    //Buffer: CAPA\r\n . CAPA\r\n
+        while(buffer_can_read(d->rb)) {
+            const uint8_t c = buffer_read(d->rb);
+            parser_feed(d->parser, c);
+            struct parser_event * pe = get_last_event(d->parser);
+            //funcion para fijarnos si termino de pasear
+
+            /*if (pe->complete) {
+                if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
+                    command_handler = comparator(pe, curr_state); //Esto tiene que devolver el estado grande al que vamos.
+                    curr_state = command_handler(d->wb, ATTACHMENT(key), pe->commands[1], pe->commands[2]);
+                    restart_tokenizer(pe);
+                } else {
+                    curr_state = ERROR; //Si dio el selector
+                }
+            }*/
         }
     } else {
         curr_state = ERROR; // Si dio error el recv
@@ -182,6 +242,13 @@ static const struct state_definition client_statbl[] = {
         .on_arrival = trans_init,
         .on_departure = empty_function,
         .on_read_ready = client_read,
+        .on_write_ready = client_write,
+    },
+    {
+        .state = READING_MAIL,
+        .on_arrival = reading_init,
+        .on_departure = empty_function,
+        .on_read_ready = filesystem_read,
         .on_write_ready = client_write,
     },
     {

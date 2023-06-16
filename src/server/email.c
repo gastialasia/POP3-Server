@@ -55,20 +55,20 @@ void load_mails(struct pop3 * p3) {
     while(d != NULL){
         if (strcmp(d->d_name,".") && strcmp(d->d_name,"..")){
             struct mail_t * new = malloc(sizeof(struct mail_t)); //Creamos mail
-            new->filename = NULL; //Por ahora no lo necesitamos
             new->marked_del = 0;
             
             //MODULARIZAR
             size_t user_len = strlen(p3->credentials->user);
             size_t path_len = strlen(INITIAL_PATH); 
             size_t file_name_len = strlen(d->d_name);
-            char* mail_path = malloc((user_len+path_len+file_name_len+strlen(CUR)+1)*sizeof(char)); //+1 por el null terminated
-            strncpy(mail_path, INITIAL_PATH, path_len+1);
-            strncat(mail_path, p3->credentials->user, user_len);
-            strcat(mail_path, CUR);
-            strcat(mail_path, d->d_name);
+            new->file_path = malloc((user_len+path_len+file_name_len+strlen(CUR)+1)*sizeof(char)); //+1 por el null terminated
+            strncpy(new->file_path, INITIAL_PATH, path_len+1);
+            strncat(new->file_path, p3->credentials->user, user_len);
+            strcat(new->file_path, CUR);
+            strcat(new->file_path, d->d_name);
+            printf("El mail_path es: %s\n", new->file_path);
 
-            if(stat(mail_path, &file_statistics)){ //Si sale mal, stat devuelve algo distinto de 0 y entonces entro
+            if(stat(new->file_path, &file_statistics)){ //Si sale mal, stat devuelve algo distinto de 0 y entonces entro
                 //Manejar el error
             }
 
