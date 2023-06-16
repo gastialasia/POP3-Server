@@ -8,8 +8,8 @@
 
 struct parser *create_mail_parser()
 {
-    size_t *transition_qty = malloc(sizeof(size_t) * MAIL_STATEQTY);                                                  // Cant de transiciones por cada nodo.
-    struct parser_state_transition **states = malloc(sizeof(struct parser_state_transition *) * MAIL_STATEQTY); // Lista de nodos
+    size_t *transition_qty = malloc(sizeof(size_t) * STATEQTY);                                                  // Cant de transiciones por cada nodo.
+    struct parser_state_transition **states = malloc(sizeof(struct parser_state_transition *) * STATEQTY); // Lista de nodos
 
     // NEW_LINE
 
@@ -87,16 +87,8 @@ struct parser *create_mail_parser()
 
     parser_definition->start_state = NEW_LINE;
     parser_definition->states = states;
-    parser_definition->states_count = MAIL_STATEQTY;
+    parser_definition->states_count = STATEQTY;
     parser_definition->states_n = transition_qty;
 
     return parser_init(parser_no_classes(), parser_definition);
-}
-
-void completed_mail(struct parser_event *event, const uint8_t c){
-    event->complete = 1; //true
-}
-
-void byte(struct parser_event *event, const uint8_t c){
-    buffer_write(event->b, c);
 }

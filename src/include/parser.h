@@ -13,8 +13,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "buffer.h"
-
 /**
  * Evento que retorna el parser.
  * Cada tipo de evento tendrá sus reglas en relación a data.
@@ -24,7 +22,7 @@ struct parser_event
     char * commands[3]; //->Comando y 2 argumentos
     int index; //Alcanza para el max que es 40 caracteres por argumento.
     uint8_t complete; //Marca si llegamos al estado final
-    buffer* b;
+
     /** lista de eventos: si es diferente de null ocurrieron varios eventos */
     struct parser_event *next;
 };
@@ -56,8 +54,6 @@ struct parser_definition
     /** estado inicial */
     unsigned start_state;
 };
-
-void set_parser_event_buf(struct parser *p, buffer* b);
 
 /**
  * inicializa el parser.

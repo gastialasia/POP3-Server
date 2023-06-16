@@ -3,7 +3,7 @@
 
 #include "parser.h"
 
-enum mail_states
+enum states
 {
     NEW_LINE,
     DOT,
@@ -13,8 +13,6 @@ enum mail_states
     FIN
 };
 
-struct parser *create_mail_parser();
-
-#define MAIL_STATEQTY 6
+#define STATEQTY 6
 
 #endif
