@@ -9,8 +9,10 @@
 #include <time.h>
 #include <unistd.h> // close
 #include <pthread.h>
-
 #include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "../include/hello.h"
 
@@ -75,7 +77,7 @@ static const struct fd_handler pop3_handler = {
 static void
 auth_init(const unsigned state, struct selector_key *key)
 {
-    struct state_st *d = &ATTACHMENT(key)->state;
+    struct state_st *d = &ATTACHMENT(key)->client.state;
     d->rb = &(ATTACHMENT(key)->read_buffer);
     d->wb = &(ATTACHMENT(key)->write_buffer);
     d->parser = ATTACHMENT(key)->parser;
@@ -85,12 +87,21 @@ static void
 trans_init(const unsigned state, struct selector_key *key)
 {
     struct pop3* p3 = ATTACHMENT(key);
-    load_mails(p3);
+    if(p3->max_index == 0){ //chequeo para no volver a cargar todos los mails denuevo
+        load_mails(p3);
+    }
 }
+
+/*static void reading_init(const unsigned state, struct selector_key *key){
+    struct reading_st *d = &ATTACHMENT(key)->client.reading;
+    d->rb = &(ATTACHMENT(key)->read_buffer);
+    d->wb = &(ATTACHMENT(key)->write_buffer);
+    //inicializar flags
+}*/
 
 static unsigned client_read(struct selector_key *key)
 {
-    struct state_st *d = &ATTACHMENT(key)->state;
+    struct state_st *d = &ATTACHMENT(key)->client.state;
     unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
     //bool error = false;
     uint8_t *ptr;
@@ -99,6 +110,7 @@ static unsigned client_read(struct selector_key *key)
     fn_type command_handler;
 
     ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
+    
     n = recv(key->fd, ptr, count, 0);
     if (n > 0){
         buffer_write_adv(d->rb, n);    //Buffer: CAPA\r\n . CAPA\r\n
@@ -126,16 +138,17 @@ static unsigned client_read(struct selector_key *key)
 }
 
 static unsigned client_write(struct selector_key *key) { // key corresponde a un client_fd
-    struct state_st *d = &ATTACHMENT(key)->state;
-
+    struct state_st *d = &ATTACHMENT(key)->client.state;
     unsigned ret = ATTACHMENT(key)->stm.current->state;
     uint8_t  *ptr;
     size_t   count;
     ssize_t  n;
-    
+    printf("estoy en write con estado: %u\n", ret);
     ptr = buffer_read_ptr(d->wb, &count);
+    printf("llegue al send\n");
     // esto deberia llamarse cuando el select lo despierta y sabe que se puede escribir al menos 1 byte, por eso no checkeamos el EWOULDBLOCK
     n = send(key->fd, ptr, count, MSG_NOSIGNAL);
+    printf("ya pase por el send\n");
     if (n == -1) {
         ret = ERROR;
     } else {
@@ -154,13 +167,56 @@ static unsigned client_write(struct selector_key *key) { // key corresponde a un
     return ret;
 }
 
+static void filesystem_read(const unsigned state, struct selector_key *key)
+{
+    struct reading_st *d = &ATTACHMENT(key)->client.reading;
+    d->rb = &(ATTACHMENT(key)->read_buffer);
+    d->wb = &(ATTACHMENT(key)->write_buffer);
+    printf("llegue a la funcion\n");
+    struct pop3* p3 = ATTACHMENT(key);
+    //struct reading_st *d = &ATTACHMENT(key)->client.reading;
+    //unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
+    //bool error = false;
+    uint8_t *ptr;
+    size_t count;
+    ssize_t n;
 
+    ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
+    int fd = open(p3->mails[p3->selected_mail]->file_path, O_RDONLY);
+    //hacerlo no bloqueante con fcntl
+    if(fd<0){
+        printf("error abriendo el file descriptor\n");
+        //return ERROR;
+    }
+    n = read(fd, ptr, count);
+    if (n > 0){
+        buffer_write_adv(d->rb, n);
+        //BYTE STUFFING
+        while(buffer_can_read(d->rb)) {
+            const uint8_t c = buffer_read(d->rb);
+            putchar(c);
+            if(c == '.'){
+                //curr_state = TRANSACTION;
+                break;
+            } 
+        }
+        send(key->fd, ptr, count, MSG_NOSIGNAL);
+    } /*else {
+        curr_state = ERROR; // Si dio error el recv
+    }*/
+    buffer_reset(d->rb);
+    buffer_reset(d->wb);
+
+    //return error ? ERROR : curr_state;
+    //return curr_state;
+}
 
 static void empty_function(const unsigned state, struct selector_key *key){
     return ;
 }
 
 static unsigned empty_function2(struct selector_key *key){
+    printf("estoy en la funcion 2");
     return 1;
 }
 
@@ -183,6 +239,13 @@ static const struct state_definition client_statbl[] = {
         .on_departure = empty_function,
         .on_read_ready = client_read,
         .on_write_ready = client_write,
+    },
+    {
+        .state = READING_MAIL,
+        .on_arrival = filesystem_read,
+        .on_departure = empty_function,
+        .on_read_ready = empty_function2,
+        .on_write_ready = empty_function2,
     },
     {
         .state = UPDATE,

@@ -83,7 +83,27 @@ unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2){
 }
 
 unsigned int retr_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
-    write_to_buffer(POSITIVE_MSG, b);
+    struct mail_t** aux = p3->mails;
+    if(arg1 != NULL){
+        unsigned int index = atoi(arg1);
+        if (index==0){
+            write_to_buffer(INVALID_INDEX_MSG, b);
+            return TRANSACTION;
+        }
+        if (index-1 > p3->max_index){
+            write_to_buffer(NO_MSG_MSG, b);
+            return TRANSACTION;
+        }
+        if(aux[index-1]->marked_del){
+            write_to_buffer(ALREADY_DELE_MSG, b);
+            return TRANSACTION;
+        }
+        write_to_buffer(POSITIVE_MSG, b);
+        p3->selected_mail = index-1;
+        return READING_MAIL;
+    } else {
+        write_to_buffer(INVALID_INDEX_MSG, b);
+    }
     return p3->stm.current->state;
 }
 
@@ -222,7 +242,6 @@ fn_type comparator(struct parser_event * pe, unsigned int curr_state){
     command_type* command_list = commands_per_state[curr_state];
     int command_qty = qty_per_state[curr_state];
     command_type curr_command;
-    //void * ret = &blank_function; // Funcion de error por default
     for(int i=0; i<command_qty; i++){
         curr_command = command_list[i];
         if (!strcmp(curr_command.command_id, command)){
