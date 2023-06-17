@@ -178,6 +178,7 @@ static unsigned filesystem_read(struct selector_key *key)
                 //Byte stuffing
                 buffer_write(d->wb, c);
                 if(c == '.'){
+                    buffer_write(d->wb, '\n');
                     d->done = true;
                     //curr_state = WRITING_MAIL;
                     break;
@@ -258,8 +259,9 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
         printf("Finished, unregistering fd\n");
         selector_unregister_fd(key->s, d->mail_fd);
         printf("Desregistered\n");
-        //buffer_reset(d->rb);
-        //buffer_reset(d->wb);
+        d->done = 0;
+        buffer_reset(d->rb);
+        buffer_reset(d->wb);
         return TRANSACTION;
     }
 
@@ -268,6 +270,7 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
 
 
 static void empty_function(const unsigned state, struct selector_key *key){
+    printf("empty function bb\n");
     return ;
 }
 
@@ -461,7 +464,9 @@ pop3_block(struct selector_key *key)
 
 static void pop3_close(struct selector_key *key)
 {
-    pop3_destroy(ATTACHMENT(key));
+    if(!ATTACHMENT(key)->client.mail.done){
+        pop3_destroy(ATTACHMENT(key));
+    }
 }
 
 static void

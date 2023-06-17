@@ -20,7 +20,7 @@
 #define COMMAND_LEN 5
 
 #define AUTH_CAPA_MSG "+OK\nCAPA\nUSER\nPIPELINING\n.\r\n"
-#define TRANS_CAPA_MSG "+OK\nCAPA\nUSER\nPIPELINING\nSTAT\nLIST\nRETR\nDELE\nRSET\nNOOP.\r\n"
+#define TRANS_CAPA_MSG "+OK\nCAPA\nUSER\nPIPELINING\nSTAT\nLIST\nRETR\nDELE\nRSET\nNOOP\n.\n"
 #define INVALID_COMMAND_MSG "-ERR Unknown command.\r\n"
 #define PASS_NOUSER_MSG "-ERR No username given.\r\n"
 #define AUTH_ERROR_MSG "-ERR [AUTH] Authentication failed.\r\n"
@@ -214,7 +214,7 @@ unsigned int auth_capa_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg
 unsigned int trans_capa_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
     //Falta if para elegir mensaje segun el estado
     write_to_buffer(TRANS_CAPA_MSG, b);
-    return AUTH;
+    return TRANSACTION;
 }
 
 unsigned int invalid_command_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
