@@ -92,17 +92,19 @@ trans_init(const unsigned state, struct selector_key *key)
     }
 }
 
-static void reading_init(const unsigned state, struct selector_key *key){
+static void 
+reading_init(const unsigned state, struct selector_key *key)
+{
+    printf("Reading init\n");
     struct reading_st *d = &ATTACHMENT(key)->client.reading;
     d->rb = &(ATTACHMENT(key)->read_buffer);
     d->wb = &(ATTACHMENT(key)->write_buffer);
-    //buffer_reset(d->rb);
-    //buffer_reset(d->wb);
-    //inicializar flags
+    selector_register(key->s, ATTACHMENT(key)->selected_mail_fd, &pop3_handler, OP_READ, ATTACHMENT(key));
 }
 
 static unsigned client_read(struct selector_key *key)
 {
+    printf("Client read\n");
     struct state_st *d = &ATTACHMENT(key)->client.state;
     unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
     //bool error = false;
@@ -140,17 +142,20 @@ static unsigned client_read(struct selector_key *key)
 }
 
 static unsigned client_write(struct selector_key *key) { // key corresponde a un client_fd
+    
+    printf("Client write\n");
     struct state_st *d = &ATTACHMENT(key)->client.state;
     unsigned ret = ATTACHMENT(key)->stm.current->state;
     uint8_t  *ptr;
     size_t   count;
     ssize_t  n;
+
     printf("estoy en write con estado: %u\n", ret);
     ptr = buffer_read_ptr(d->wb, &count);
     printf("llegue al send\n");
     // esto deberia llamarse cuando el select lo despierta y sabe que se puede escribir al menos 1 byte, por eso no checkeamos el EWOULDBLOCK
     n = send(key->fd, ptr, count, MSG_NOSIGNAL);
-    printf("ya pase por el send\n");
+    printf("Send: %s\n", ptr);
     if (n == -1) {
         ret = ERROR;
     } else {
@@ -175,20 +180,25 @@ static unsigned filesystem_read(struct selector_key *key)
     struct pop3* p3 = ATTACHMENT(key);
     struct reading_st *d = &ATTACHMENT(key)->client.reading;
     unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
+
+    buffer_reset(d->rb); //Reinicio el rb
+
     //bool error = false;
     uint8_t *ptr;
     size_t count;
     ssize_t n;
 
     ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
+    /*
     int fd = open(p3->mails[p3->selected_mail]->file_path, O_RDONLY);
-    //hacerlo no bloqueante con fcntl
-    
     if(fd<0){
         printf("error abriendo el file descriptor\n");
         //return ERROR;
     }
-    n = read(fd, ptr, count);
+    fcntl();*/
+    
+    //hacerlo no bloqueante con fcntl
+    n = read(p3->selected_mail_fd, ptr, count);
     if (n > 0){
         buffer_write_adv(d->rb, n);
         if(SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
@@ -197,9 +207,8 @@ static unsigned filesystem_read(struct selector_key *key)
                 const uint8_t c = buffer_read(d->rb);
                 buffer_write(d->wb, c);
                 if(c == '.'){
-                    //curr_state = TRANSACTION;
                     break;
-                } 
+                }
             }
         }
     } else {

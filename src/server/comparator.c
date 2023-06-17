@@ -7,6 +7,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 #define AUTH_COMMAND_QTY 4
 #define TR_COMMAND_QTY 8
@@ -98,10 +102,20 @@ unsigned int retr_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
             write_to_buffer(ALREADY_DELE_MSG, b);
             return TRANSACTION;
         }
-        printf("estoy en el handler\n");
+        printf("estoy en el retr_handler\n");
         write_to_buffer(POSITIVE_MSG, b);
-        p3->selected_mail = index-1;
+
+        //Abro el archivo
+        int fd = open(p3->mails[p3->selected_mail]->file_path, O_RDONLY);
+        if(fd<0){
+            printf("error abriendo el file descriptor\n");
+        return ERROR;
+        }
+        //Registro el fd en el selector
+        p3->selected_mail_fd = fd; // ME GUARDO EL FD DEL ARCHIVO EN POP3
         return READING_MAIL;
+
+
     } else {
         write_to_buffer(INVALID_INDEX_MSG, b);
     }

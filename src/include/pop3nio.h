@@ -64,6 +64,8 @@ struct pop3
 
     unsigned selected_mail;
 
+    int selected_mail_fd;
+
     struct mail_t ** mails;
 
     struct parser * parser;
