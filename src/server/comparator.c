@@ -111,6 +111,9 @@ unsigned int retr_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
             printf("error abriendo el file descriptor\n");
         return ERROR;
         }
+        if(selector_fd_set_nio(fd)<0){
+            printf("Error seteando fd no blockeante\n");
+        }
         //Registro el fd en el selector
         p3->selected_mail_fd = fd; // ME GUARDO EL FD DEL ARCHIVO EN POP3
         return READING_MAIL;

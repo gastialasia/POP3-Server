@@ -18,6 +18,7 @@ enum pop3state
     AUTH, //Se mueve a AUTH o ERROR
     TRANSACTION, // Se mueve a QUIT, ERROR o TRANSACTION
     READING_MAIL, //for byte stuffing, se mueve a TRANSACTION o a ERROR
+    WRITING_MAIL,
     UPDATE,
     // estados terminales
     DONE,
@@ -34,9 +35,9 @@ struct state_st{
     struct parser * parser;
 };
 
-struct reading_st{
+struct mail_st{
     buffer *rb, *wb;
-    //flags
+    int mail_fd, socket_fd;
 };
 
 struct pop3
@@ -74,7 +75,7 @@ struct pop3
 
     union {
         struct state_st state;
-        struct reading_st reading;
+        struct mail_st mail;
     } client;
     
     

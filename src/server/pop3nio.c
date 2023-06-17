@@ -96,9 +96,11 @@ static void
 reading_init(const unsigned state, struct selector_key *key)
 {
     printf("Reading init\n");
-    struct reading_st *d = &ATTACHMENT(key)->client.reading;
+    struct mail_st *d = &ATTACHMENT(key)->client.mail;
     d->rb = &(ATTACHMENT(key)->read_buffer);
     d->wb = &(ATTACHMENT(key)->write_buffer);
+    d->mail_fd = (ATTACHMENT(key)->selected_mail_fd);
+    d->socket_fd = (ATTACHMENT(key)->client_fd);
     selector_register(key->s, ATTACHMENT(key)->selected_mail_fd, &pop3_handler, OP_READ, ATTACHMENT(key));
 }
 
@@ -141,6 +143,42 @@ static unsigned client_read(struct selector_key *key)
     return curr_state;
 }
 
+static unsigned filesystem_read(struct selector_key *key)
+{
+    printf("llegue a la funcion\n");
+    struct pop3* p3 = ATTACHMENT(key);
+    struct mail_st *d = &ATTACHMENT(key)->client.mail;
+    unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
+
+    //buffer_reset(d->rb); //Reinicio el rb
+    uint8_t *ptr;
+    size_t count;
+    ssize_t n;
+
+    ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
+    
+    n = read(p3->selected_mail_fd, ptr, count);
+    if (n > 0){
+        buffer_write_adv(d->rb, n);
+        if(SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
+            //BYTE STUFFING
+            while(buffer_can_read(d->rb)) {
+                const uint8_t c = buffer_read(d->rb);
+                //Byte stuffing
+                buffer_write(d->wb, c);
+                if(c == '.'){
+                    curr_state = WRITING_MAIL;
+                    break;
+                }
+            }
+        }
+    } else {
+        curr_state = ERROR; // Si dio error el recv
+    }
+
+    return curr_state;
+}
+
 static unsigned client_write(struct selector_key *key) { // key corresponde a un client_fd
     
     printf("Client write\n");
@@ -174,58 +212,47 @@ static unsigned client_write(struct selector_key *key) { // key corresponde a un
     return ret;
 }
 
-static unsigned filesystem_read(struct selector_key *key)
-{
-    printf("llegue a la funcion\n");
-    struct pop3* p3 = ATTACHMENT(key);
-    struct reading_st *d = &ATTACHMENT(key)->client.reading;
-    unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
-
-    buffer_reset(d->rb); //Reinicio el rb
-
-    //bool error = false;
-    uint8_t *ptr;
-    size_t count;
-    ssize_t n;
-
-    ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
-    /*
-    int fd = open(p3->mails[p3->selected_mail]->file_path, O_RDONLY);
-    if(fd<0){
-        printf("error abriendo el file descriptor\n");
-        //return ERROR;
-    }
-    fcntl();*/
+static unsigned mail_write(struct selector_key *key) { // key corresponde a un client_fd
     
-    //hacerlo no bloqueante con fcntl
-    n = read(p3->selected_mail_fd, ptr, count);
-    if (n > 0){
-        buffer_write_adv(d->rb, n);
-        if(SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
-            //BYTE STUFFING
-            while(buffer_can_read(d->rb)) {
-                const uint8_t c = buffer_read(d->rb);
-                buffer_write(d->wb, c);
-                if(c == '.'){
-                    break;
-                }
+    printf("Mail write\n");
+    struct mail_st *d = &ATTACHMENT(key)->client.mail;
+    unsigned ret = ATTACHMENT(key)->stm.current->state;
+    uint8_t  *ptr;
+    size_t   count;
+    ssize_t  n;
+
+    printf("estoy en write con estado: %u\n", ret);
+    ptr = buffer_read_ptr(d->wb, &count);
+    printf("llegue al send\n");
+    // esto deberia llamarse cuando el select lo despierta y sabe que se puede escribir al menos 1 byte, por eso no checkeamos el EWOULDBLOCK
+    n = send(d->socket_fd, ptr, count, MSG_NOSIGNAL);
+    printf("Send: %s\n", ptr);
+    if (n == -1) {
+        ret = ERROR;
+    } else {
+        buffer_read_adv(d->wb, n);
+        // si terminamos de mandar toda la response del HELLO, hacemos transicion HELLO_WRITE -> AUTH_READ o HELLO_WRITE -> REQUEST_READ
+        if (!buffer_can_read(d->wb)) {
+            if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_READ)) {
+                // en caso de que haya fallado el handshake del hello, el cliente es el que cerrara la conexion
+                //ret = AUTH;//is_auth_on ? AUTH_READ : REQUEST_READ;
+            } else {
+                ret = ERROR;
             }
         }
-    } else {
-        curr_state = ERROR; // Si dio error el recv
     }
 
-    //return error ? ERROR : curr_state;
-    return curr_state;
+    return READING_MAIL;
 }
+
 
 static void empty_function(const unsigned state, struct selector_key *key){
     return ;
 }
 
 static unsigned empty_function2(struct selector_key *key){
-    printf("estoy en la funcion 2");
-    return 1;
+    printf("estoy en la empty function 2");
+    return ATTACHMENT(key)->stm.current->state;
 }
 
 /*static void print_current_state(const unsigned state, struct selector_key *key){
@@ -253,7 +280,14 @@ static const struct state_definition client_statbl[] = {
         .on_arrival = reading_init,
         .on_departure = empty_function,
         .on_read_ready = filesystem_read,
-        .on_write_ready = client_write,
+        .on_write_ready = empty_function2,
+    },
+    {
+        .state = WRITING_MAIL,
+        .on_arrival = empty_function,
+        .on_departure = empty_function,
+        .on_read_ready = empty_function2,
+        .on_write_ready = mail_write,
     },
     {
         .state = UPDATE,
