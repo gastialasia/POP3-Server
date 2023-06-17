@@ -104,7 +104,6 @@ unsigned int retr_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
         }
         printf("estoy en el retr_handler\n");
         write_to_buffer(POSITIVE_MSG, b);
-
         //Abro el archivo
         int fd = open(p3->mails[p3->selected_mail]->file_path, O_RDONLY);
         if(fd<0){
@@ -117,8 +116,7 @@ unsigned int retr_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
         //Registro el fd en el selector
         p3->selected_mail_fd = fd; // ME GUARDO EL FD DEL ARCHIVO EN POP3
         return READING_MAIL;
-
-
+        
     } else {
         write_to_buffer(INVALID_INDEX_MSG, b);
     }

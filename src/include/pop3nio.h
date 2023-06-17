@@ -38,6 +38,7 @@ struct state_st{
 struct mail_st{
     buffer *rb, *wb;
     int mail_fd, socket_fd;
+    uint8_t done;
 };
 
 struct pop3

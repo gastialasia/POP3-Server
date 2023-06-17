@@ -86,6 +86,11 @@ auth_init(const unsigned state, struct selector_key *key)
 static void
 trans_init(const unsigned state, struct selector_key *key)
 {
+    printf("Trans init\n");
+    struct state_st *d = &ATTACHMENT(key)->client.state;
+    d->rb = &(ATTACHMENT(key)->read_buffer);
+    d->wb = &(ATTACHMENT(key)->write_buffer);
+    d->parser = ATTACHMENT(key)->parser;
     struct pop3* p3 = ATTACHMENT(key);
     if(p3->max_index == 0){ //chequeo para no volver a cargar todos los mails denuevo
         load_mails(p3);
@@ -101,6 +106,7 @@ reading_init(const unsigned state, struct selector_key *key)
     d->wb = &(ATTACHMENT(key)->write_buffer);
     d->mail_fd = (ATTACHMENT(key)->selected_mail_fd);
     d->socket_fd = (ATTACHMENT(key)->client_fd);
+    d->done = 0;
     selector_register(key->s, ATTACHMENT(key)->selected_mail_fd, &pop3_handler, OP_READ, ATTACHMENT(key));
 }
 
@@ -149,6 +155,7 @@ static unsigned filesystem_read(struct selector_key *key)
     struct pop3* p3 = ATTACHMENT(key);
     struct mail_st *d = &ATTACHMENT(key)->client.mail;
     unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
+    curr_state = WRITING_MAIL;
 
     //buffer_reset(d->rb); //Reinicio el rb
     uint8_t *ptr;
@@ -158,6 +165,10 @@ static unsigned filesystem_read(struct selector_key *key)
     ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
     
     n = read(p3->selected_mail_fd, ptr, count);
+    if (n==0){
+        curr_state = TRANSACTION;
+        //selector_unregister_fd(key->s, d->mail_fd);
+    }
     if (n > 0){
         buffer_write_adv(d->rb, n);
         if(SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
@@ -167,7 +178,8 @@ static unsigned filesystem_read(struct selector_key *key)
                 //Byte stuffing
                 buffer_write(d->wb, c);
                 if(c == '.'){
-                    curr_state = WRITING_MAIL;
+                    d->done = true;
+                    //curr_state = WRITING_MAIL;
                     break;
                 }
             }
@@ -242,7 +254,16 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
         }
     }
 
-    return READING_MAIL;
+    if (d->done){
+        printf("Finished, unregistering fd\n");
+        selector_unregister_fd(key->s, d->mail_fd);
+        printf("Desregistered\n");
+        //buffer_reset(d->rb);
+        //buffer_reset(d->wb);
+        return TRANSACTION;
+    }
+
+    return TRANSACTION; //READING_MAIL
 }
 
 
@@ -251,9 +272,15 @@ static void empty_function(const unsigned state, struct selector_key *key){
 }
 
 static unsigned empty_function2(struct selector_key *key){
-    printf("estoy en la empty function 2");
+    printf("empty function 2 (estado %u)\n", ATTACHMENT(key)->stm.current->state);
     return ATTACHMENT(key)->stm.current->state;
 }
+
+static void error_function(const unsigned state, struct selector_key *key){
+    printf("Estas en el estado de error capo\n");
+    return ;
+}
+
 
 /*static void print_current_state(const unsigned state, struct selector_key *key){
     printf("LLegue a transaction\n");
@@ -304,7 +331,7 @@ static const struct state_definition client_statbl[] = {
     },
     {
         .state = ERROR,
-        .on_arrival = empty_function,
+        .on_arrival = error_function,
         .on_departure = empty_function,
         .on_read_ready = empty_function2,
     },
