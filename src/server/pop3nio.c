@@ -170,7 +170,7 @@ static int byte_stuffer(char input, int* state){
 
 static unsigned filesystem_read(struct selector_key *key)
 {
-    printf("llegue a la funcion\n");
+    printf("llegue a filesystem read\n");
     struct pop3* p3 = ATTACHMENT(key);
     struct mail_st *d = &ATTACHMENT(key)->client.mail;
     unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
@@ -188,17 +188,18 @@ static unsigned filesystem_read(struct selector_key *key)
         curr_state = TRANSACTION;
         //selector_unregister_fd(key->s, d->mail_fd);
     }
-    if (n > 0){
-        buffer_write_adv(d->rb, n);
+    if (n > 0){                                                                        
+        buffer_write_adv(d->rb, n);                                                  
         if(SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
             //BYTE STUFFING
             while(buffer_can_read(d->rb)) {
-                const uint8_t c = buffer_read(d->rb);
+                const uint8_t c = buffer_read(d->rb);                                                   
                 //Byte stuffing
                 buffer_write(d->wb, c);
                 if(byte_stuffer(c, &d->byte_stuffing_st)){
                     buffer_write(d->wb, '\n');
                     d->done = true;
+                    //buffer_reset(d->rb); //Vacio el read buffer
                     //curr_state = WRITING_MAIL;
                     break;
                 }
@@ -239,7 +240,6 @@ static unsigned client_write(struct selector_key *key) { // key corresponde a un
             }
         }
     }
-
     return ret;
 }
 
@@ -263,9 +263,9 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
         buffer_read_adv(d->wb, n);
         // si terminamos de mandar toda la response del HELLO, hacemos transicion HELLO_WRITE -> AUTH_READ o HELLO_WRITE -> REQUEST_READ
         if (!buffer_can_read(d->wb)) {
+            printf("Se acabo el buffer, seteo INTEREST del file en lectura\n");
             if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_READ)) {
-                // en caso de que haya fallado el handshake del hello, el cliente es el que cerrara la conexion
-                //ret = AUTH;//is_auth_on ? AUTH_READ : REQUEST_READ;
+                ret = READING_MAIL;
             } else {
                 ret = ERROR;
             }
@@ -282,7 +282,7 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
         return TRANSACTION;
     }
 
-    return TRANSACTION; //READING_MAIL
+    return ret; //READING_MAIL
 }
 
 
@@ -292,7 +292,7 @@ static void empty_function(const unsigned state, struct selector_key *key){
 }
 
 static unsigned empty_function2(struct selector_key *key){
-    printf("empty function 2 (estado %u)\n", ATTACHMENT(key)->stm.current->state);
+    //printf("empty function 2 (estado %u)\n", ATTACHMENT(key)->stm.current->state);
     return ATTACHMENT(key)->stm.current->state;
 }
 
@@ -327,13 +327,13 @@ static const struct state_definition client_statbl[] = {
         .on_arrival = reading_init,
         .on_departure = empty_function,
         .on_read_ready = filesystem_read,
-        .on_write_ready = empty_function2,
+        .on_write_ready = mail_write,
     },
     {
         .state = WRITING_MAIL,
         .on_arrival = empty_function,
         .on_departure = empty_function,
-        .on_read_ready = empty_function2,
+        .on_read_ready = filesystem_read,
         .on_write_ready = mail_write,
     },
     {
