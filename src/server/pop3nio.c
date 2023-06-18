@@ -150,34 +150,16 @@ static unsigned client_read(struct selector_key *key)
     return curr_state;
 }
 
-/*static int byte_stuffer(char input, int* state){
-    if (input == '\r' && *state == 0) {
-        *state = 1;
-    } else if (input == '\n' && *state == 1) {
-        *state = 2;
-    } else if (input == '.' && *state == 2) {
-        *state = 3;
-    } else if (input == '\r' && *state == 3) {
-        *state = 4;
-    } else if (input == '\n' && *state == 4) {
-        printf("\nTERMINE\n");
-        return 1;
-    } else {
-        *state = 0;
-    }
-    return 0;
-}*/
-
 static int byte_stuffer(char input, int* state){
-    if (input == '\r' && *state == 0) {
+    if (input == '+' && *state == 0) {
         *state = 1;
-    } else if (input == '\n' && *state == 1) {
+    } else if (input == '-' && *state == 1) {
         *state = 2;
     } else if (input == '.' && *state == 2) {
         *state = 3;
-    } else if (input == '\r' && *state == 3) {
+    } else if (input == '+' && *state == 3) {
         *state = 4;
-    } else if (input == '\n' && *state == 4) {
+    } else if (input == '-' && *state == 4) {
         printf("\nTERMINE\n");
         return 1;
     } else {
@@ -243,7 +225,6 @@ static unsigned client_write(struct selector_key *key) { // key corresponde a un
     printf("llegue al send\n");
     // esto deberia llamarse cuando el select lo despierta y sabe que se puede escribir al menos 1 byte, por eso no checkeamos el EWOULDBLOCK
     n = send(key->fd, ptr, count, MSG_NOSIGNAL);
-    printf("Send: %s\n", ptr);
     if (n == -1) {
         ret = ERROR;
     } else {
@@ -276,7 +257,6 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
     printf("llegue al send\n");
     // esto deberia llamarse cuando el select lo despierta y sabe que se puede escribir al menos 1 byte, por eso no checkeamos el EWOULDBLOCK
     n = send(d->socket_fd, ptr, count, MSG_NOSIGNAL);
-    printf("Send: %s\n", ptr);
     if (n == -1) {
         ret = ERROR;
     } else {
