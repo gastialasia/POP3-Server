@@ -44,6 +44,27 @@ char* path_to_maildir = INITIAL_PATH;
 
 /** realmente destruye */
 
+static struct pop3* remove_client_rec(struct pop3* s, int client_fd) {
+    if (s == NULL) {
+        return NULL;
+    }
+    if(s->client_fd == client_fd){
+        struct pop3* aux = s->next;
+        free(s);
+        return aux;
+    }
+    s->next = remove_client_rec(s->next, client_fd);
+    return s;
+}
+
+static void remove_client(int client_fd) {
+    if (head_connection == NULL) {
+        return;
+    }
+    head_connection = remove_client_rec(head_connection, client_fd);
+}
+
+
 static void free_credentials(struct pop3 *s){
     free(s->credentials->pass);
     free(s->credentials->user);
@@ -55,7 +76,7 @@ static void pop3_destroy(struct pop3 *s)
     free_mails(s);
     free_credentials(s);
     parser_destroy(s->parser);
-    free(s);
+    remove_client(s->client_fd);
     connections--;
 }
 
