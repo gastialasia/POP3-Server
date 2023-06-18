@@ -20,4 +20,6 @@ char* read_mail(DIR* directory, struct pop3* p3, char* path);
 //Carga los mails en la estructura pop3
 void load_mails(struct pop3 * p3);
 
+void free_mails(struct pop3 * p3);
+
 #endif

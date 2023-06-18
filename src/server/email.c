@@ -84,4 +84,13 @@ void load_mails(struct pop3 * p3) {
     }
     p3->max_index = p3->mail_qty-1;
     p3->original_total_octates = p3->total_octates;
+    closedir(directory);
+}
+
+void free_mails(struct pop3 * p3) {
+    for(unsigned i=0; i<=p3->max_index; i++){
+        free(p3->mails[i]->file_path);
+        free(p3->mails[i]);
+    }
+        free(p3->mails);
 }

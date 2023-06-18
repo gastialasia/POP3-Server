@@ -43,11 +43,18 @@ char* path_to_maildir = INITIAL_PATH;
  */
 
 /** realmente destruye */
+
+static void free_credentials(struct pop3 *s){
+    free(s->credentials->pass);
+    free(s->credentials->user);
+    free(s->credentials);
+}
+
 static void pop3_destroy(struct pop3 *s)
 {
-    free(s->credentials);
+    free_mails(s);
+    free_credentials(s);
     parser_destroy(s->parser);
-    free(s->mails);
     free(s);
     connections--;
 }

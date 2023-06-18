@@ -12,7 +12,7 @@ struct parser
     /** tipificación para cada caracter */
     const unsigned *classes;
     /** definición de estados */
-    const struct parser_definition *def;
+    struct parser_definition *def;
 
     /* estado actual */
     unsigned state;
@@ -24,12 +24,18 @@ struct parser
 void parser_destroy(struct parser *p)
 {
     free_parser_events_rec(&p->e1); //No esta cambiando nada
+    for(unsigned i=0; i<p->def->states_count; i++){
+        free(p->def->states[i]);
+    }
+    free(p->def->states);
+    free(p->def->states_n);
+    free(p->def);
     if (p!=NULL){
         free(p);
     }
 }
 
-struct parser * parser_init(const unsigned *classes, const struct parser_definition *def)
+struct parser * parser_init(const unsigned *classes, struct parser_definition *def)
 {
     struct parser *ret = malloc(sizeof(*ret));
     if (ret != NULL)
