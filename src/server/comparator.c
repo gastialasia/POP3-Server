@@ -102,6 +102,8 @@ unsigned int retr_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
             write_to_buffer(ALREADY_DELE_MSG, b);
             return TRANSACTION;
         }
+        p3->selected_mail = index-1;
+        printf("el path es: %s\n", aux[p3->selected_mail]->file_path);
         printf("estoy en el retr_handler\n");
         write_to_buffer(POSITIVE_MSG, b);
         //Abro el archivo

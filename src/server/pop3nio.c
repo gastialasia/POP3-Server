@@ -107,6 +107,7 @@ reading_init(const unsigned state, struct selector_key *key)
     d->mail_fd = (ATTACHMENT(key)->selected_mail_fd);
     d->socket_fd = (ATTACHMENT(key)->client_fd);
     d->done = 0;
+    d->byte_stuffing_st = 0;
     selector_register(key->s, ATTACHMENT(key)->selected_mail_fd, &pop3_handler, OP_READ, ATTACHMENT(key));
 }
 
@@ -149,6 +150,42 @@ static unsigned client_read(struct selector_key *key)
     return curr_state;
 }
 
+/*static int byte_stuffer(char input, int* state){
+    if (input == '\r' && *state == 0) {
+        *state = 1;
+    } else if (input == '\n' && *state == 1) {
+        *state = 2;
+    } else if (input == '.' && *state == 2) {
+        *state = 3;
+    } else if (input == '\r' && *state == 3) {
+        *state = 4;
+    } else if (input == '\n' && *state == 4) {
+        printf("\nTERMINE\n");
+        return 1;
+    } else {
+        *state = 0;
+    }
+    return 0;
+}*/
+
+static int byte_stuffer(char input, int* state){
+    if (input == '\r' && *state == 0) {
+        *state = 1;
+    } else if (input == '\n' && *state == 1) {
+        *state = 2;
+    } else if (input == '.' && *state == 2) {
+        *state = 3;
+    } else if (input == '\r' && *state == 3) {
+        *state = 4;
+    } else if (input == '\n' && *state == 4) {
+        printf("\nTERMINE\n");
+        return 1;
+    } else {
+        *state = 0;
+    }
+    return 0;
+}
+
 static unsigned filesystem_read(struct selector_key *key)
 {
     printf("llegue a la funcion\n");
@@ -177,7 +214,7 @@ static unsigned filesystem_read(struct selector_key *key)
                 const uint8_t c = buffer_read(d->rb);
                 //Byte stuffing
                 buffer_write(d->wb, c);
-                if(c == '.'){
+                if(byte_stuffer(c, &d->byte_stuffing_st)){
                     buffer_write(d->wb, '\n');
                     d->done = true;
                     //curr_state = WRITING_MAIL;
