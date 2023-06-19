@@ -264,10 +264,7 @@ static unsigned client_write(struct selector_key *key) { // key corresponde a un
             }
         }
     }
-    if(ret==UPDATE){
-        return DONE;
-    }
-    return ret;
+    return ret == UPDATE ? DONE : ret;
 }
 
 static unsigned mail_write(struct selector_key *key) { // key corresponde a un client_fd
