@@ -29,9 +29,10 @@
 
 // Variable globales
 static unsigned int connections = 0; // live qty of connections
+//static unsigned historic_connections = 0; //aumenta cada vez que se establece una conexion
+//static size_t transfer_bytes = 0; //aumentar despues de un send
 static struct pop3 *head_connection = NULL;
 //path a la carpeta donde estan los directorios de todos los usuarios
-char* path_to_maildir = INITIAL_PATH;
 
 /*
  * Si bien cada estado tiene su propio struct que le da un alcance
@@ -120,11 +121,7 @@ trans_init(const unsigned state, struct selector_key *key)
     d->rb = &(ATTACHMENT(key)->read_buffer);
     d->wb = &(ATTACHMENT(key)->write_buffer);
     d->parser = ATTACHMENT(key)->parser;
-    struct pop3* p3 = ATTACHMENT(key);
-    //p3->mails = malloc(BLOCK*sizeof(struct mail_t*));
-    if(p3->max_index == 0){ //chequeo para no volver a cargar todos los mails denuevo
-        load_mails(p3);
-    }
+    
 }
 
 static void 

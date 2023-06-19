@@ -118,6 +118,9 @@ struct parser *create_parser()
 }
 
 void completed(struct parser_event *event, const uint8_t c){
+    if(event->commands[0] == NULL){
+        event->commands[0] = calloc(1, sizeof(char));
+    }
     event->complete = 1; //true
     event->index = 0;
 }

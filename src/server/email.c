@@ -5,8 +5,11 @@
 #include <unistd.h>
 #include "../include/email.h"
 #include "../include/email.h"
-#define CUR "/cur/"
 
+#define CUR "/cur/"
+#define INITIAL_PATH "./directories/"
+
+char* path_to_maildir = INITIAL_PATH;
 
 DIR* open_maildir(struct pop3* p3, char* path){
     size_t user_len = strlen(p3->credentials->user);
@@ -49,9 +52,16 @@ char* read_mail(DIR* directory, struct pop3* p3, char* path){
 }
 
 void load_mails(struct pop3 * p3) {
-    DIR * directory = open_maildir(p3, INITIAL_PATH);
+    DIR * directory = open_maildir(p3, path_to_maildir);
     struct dirent * d = readdir(directory);
     struct stat file_statistics;
+    if(p3->max_index != 0){ //Chequeo si ya habia mails cargados
+        free_mails(p3);
+    }
+    p3->mail_qty = 0;
+    p3->max_index = 0;
+    p3->total_octates = 0;
+    p3->original_total_octates = 0;
     while(d != NULL){
         if (strcmp(d->d_name,".") && strcmp(d->d_name,"..")){
             struct mail_t * new = malloc(sizeof(struct mail_t)); //Creamos mail
@@ -59,10 +69,10 @@ void load_mails(struct pop3 * p3) {
             
             //MODULARIZAR
             size_t user_len = strlen(p3->credentials->user);
-            size_t path_len = strlen(INITIAL_PATH); 
+            size_t path_len = strlen(path_to_maildir); 
             size_t file_name_len = strlen(d->d_name);
             new->file_path = malloc((user_len+path_len+file_name_len+strlen(CUR)+1)*sizeof(char)); //+1 por el null terminated
-            strncpy(new->file_path, INITIAL_PATH, path_len+1);
+            strncpy(new->file_path, path_to_maildir, path_len+1);
             strncat(new->file_path, p3->credentials->user, user_len);
             strcat(new->file_path, CUR);
             strcat(new->file_path, d->d_name);

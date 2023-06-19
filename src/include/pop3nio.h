@@ -7,8 +7,6 @@
 #include "buffer.h"
 #include "parser.h"
 
-#define INITIAL_PATH "./directories/"
-
 #define MAX_USERS 5
 #define BUFFER_SIZE 1024
 

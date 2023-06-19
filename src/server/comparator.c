@@ -177,7 +177,7 @@ unsigned int rset_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
 }
 
 unsigned int list_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
-    printf("el arg1 %s NULL\n", arg1 == NULL?"es":"no es");
+    load_mails(p3);
     char list_msg[40];
     if(arg1 != NULL){
         unsigned int index = atoi(arg1);
@@ -212,6 +212,7 @@ unsigned int list_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
 
 unsigned int stat_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
     //Falta if para elegir mensaje segun el estado
+    load_mails(p3);
     char stat_msg[40];
     sprintf(stat_msg, STAT_FMT, p3->mail_qty, p3->total_octates); 
     write_to_buffer(stat_msg, b);
@@ -266,7 +267,6 @@ unsigned int pass_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
 }
 
 fn_type comparator(struct parser_event * pe, unsigned int curr_state){
-    printf("el current state es: %u\n", curr_state);
     char * command = pe->commands[0];
     command_type* command_list = commands_per_state[curr_state];
     int command_qty = qty_per_state[curr_state];
