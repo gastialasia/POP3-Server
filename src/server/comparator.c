@@ -155,9 +155,9 @@ unsigned int dele_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
             return TRANSACTION;
         }
         // aux[index-1]->marked_del = 1; Ahora guardamos esto en el array de dele_flags
+        printf("Arriba\n");
         p3->dele_flags[index-1] = 1;
-        p3->mail_qty--;
-        p3->total_octates -= p3->mails[index-1]->size;
+        printf("Abajo\n");
         write_to_buffer(DELE_MSG, b);
     } else {
         write_to_buffer(INVALID_INDEX_MSG, b);
@@ -201,9 +201,11 @@ unsigned int list_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
         }
     } else {
         //LIST sin argumentos
+        printf("List sin argumentos\n");
         sprintf(list_msg, LIST_FMT, p3->mail_qty, p3->total_octates); 
         write_to_buffer(list_msg, b);
         for(unsigned i=0; i <= p3->max_index; i++){
+            printf("%u, flag=%d\n", i, p3->dele_flags[i]);
             if(!p3->dele_flags[i]){
                 sprintf(list_msg, "%u %ld\n",i+1,p3->mails[i]->size);
                 write_to_buffer(list_msg, b); 

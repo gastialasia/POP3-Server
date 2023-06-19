@@ -25,7 +25,6 @@
 #include "../include/email.h"
 
 #define N(x) (sizeof(x) / sizeof((x)[0]))
-#define BLOCK 5
 
 // Variable globales
 static unsigned int connections = 0; // live qty of connections
@@ -72,11 +71,13 @@ static void pop3_destroy(struct pop3 *s)
     if(s->credentials->pass!=NULL){
         free(s->credentials->user);
         free(s->credentials->pass);
-        free_mails(s);
     } else if (s->credentials->user!=NULL){
         free(s->credentials->user);
-    } 
-    free(s->mails);
+    }
+    if (s->mails!=NULL){
+        free_mails(s);
+        free(s->mails);
+    }
     free(s->dele_flags); //Agregue el free para los flags
     free(s->credentials);
     parser_destroy(s->parser);
@@ -421,8 +422,8 @@ static struct pop3 *pop3_new(int client_fd)
     ret->stm.states = pop3_describe_states();
     ret->credentials = calloc(1, sizeof(struct credentials_t));
     ret->parser = create_parser();
-    ret->mails = malloc(BLOCK*sizeof(struct mail_t*));
-    ret->dele_flags = calloc(1,BLOCK*sizeof(uint8_t));
+    ret->mails = NULL;
+    ret->dele_flags = calloc(20,sizeof(uint8_t));
     stm_init(&ret->stm);
 
     buffer_init(&ret->read_buffer, N(ret->raw_buff_a), ret->raw_buff_a);

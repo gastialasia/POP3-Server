@@ -9,6 +9,8 @@
 #define CUR "/cur/"
 #define INITIAL_PATH "./directories/"
 
+#define BLOCK 20
+
 char* path_to_maildir = INITIAL_PATH;
 
 DIR* open_maildir(struct pop3* p3, char* path){
@@ -31,7 +33,6 @@ char* read_mail(DIR* directory, struct pop3* p3, char* path){
         d = readdir(directory);
     }
         
-
     //Creamos el path al archivo de mail
     size_t user_len = strlen(p3->credentials->user);
     size_t path_len = strlen(path); 
@@ -64,6 +65,7 @@ void load_mails(struct pop3 * p3) {
     unsigned int i=0;
     while(d != NULL){
         if (strcmp(d->d_name,".") && strcmp(d->d_name,"..")){
+
             struct mail_t * new = malloc(sizeof(struct mail_t)); //Creamos mail
             
             //MODULARIZAR
@@ -80,29 +82,48 @@ void load_mails(struct pop3 * p3) {
                 //Manejar el error
             }
 
-            //cargamos el mail en cuestion
-            printf("Cargando mail (%s): %s\n",p3->credentials->user,d->d_name);
-            new->size = file_statistics.st_size;
+            new->size = file_statistics.st_size; 
 
+            //p3->mails = malloc(BLOCK*sizeof(struct mail_t*)); 
+
+            //Cargo mail en el array. Si hace falta, lo agrando
+            if (i%BLOCK==0){
+                p3->mails = realloc(p3->mails, (BLOCK+i)*sizeof(struct mail_t*)); //realloco espacio para mails
+                //p3->dele_flags = realloc(p3->dele_flags, (BLOCK+i)*sizeof(u_int8_t)); //realloco espacio para flags
+                if (p3->mails==NULL||p3->dele_flags==NULL){
+                    printf("ERROR: Not enough memory to load user mails\n");
+                }
+                /*for(unsigned int j=i; j<i+BLOCK; j++){
+                    p3->dele_flags[j]=0; //Asigno los flags en 0
+                }*/
+            }
+            
             p3->mails[i] = new; //Guardo mail en el array de mails
+            printf("Mail[%d] cargado (dele=%d) size=%lu\n", i, p3->dele_flags[i], new->size);
 
             if(!p3->dele_flags[i]){
                 //Si el mail no esta marcado como borrado:
                 p3->mail_qty++; //Lo agrego a mail_qty, entonces esta actualizado cada vez que cargo los mails
                 p3->total_octates += file_statistics.st_size; //Sumo sus octetos
             }
+
             i++;
         }
         d = readdir(directory);
     }
     p3->max_index = i-1; //Le resto uno porque despues del while me quedo incrementado en 1
-    printf("max_index: %d\n",p3->max_index);
-    printf("mail_qty: %d\n",p3->mail_qty);
     p3->original_total_octates = p3->total_octates;
     closedir(directory);
+    printf("Termine de cargar mails\n");
+    for(unsigned int i=0; i<=p3->max_index; i++){
+        printf("i=%d, flag[i]=%d,\n",i, p3->dele_flags[i]);
+    }
 }
 
-void free_mails(struct pop3 * p3) {  
+void free_mails(struct pop3 * p3) {
+    if (p3->mails==NULL){
+        return;
+    }  
     for(unsigned i=0; i<=p3->max_index; i++){
         free(p3->mails[i]->file_path);
         free(p3->mails[i]);
