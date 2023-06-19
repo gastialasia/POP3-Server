@@ -307,6 +307,24 @@ static void empty_function(const unsigned state, struct selector_key *key){
     return ;
 }
 
+static void delete_mails(const unsigned state, struct selector_key *key){
+    struct pop3 * p3 = ATTACHMENT(key);
+    for(unsigned int i=0; i<=p3->max_index; i++){
+        if(p3->mails[i]->marked_del){
+            //char * path = p3->mails[i]->file_path;
+            remove(p3->mails[i]->file_path);
+        }
+    }
+    return ;
+}
+
+static unsigned go_to_done(struct selector_key *key){
+    return DONE;
+}
+
+
+
+
 static unsigned empty_function2(struct selector_key *key){
     //printf("empty function 2 (estado %u)\n", ATTACHMENT(key)->stm.current->state);
     return ATTACHMENT(key)->stm.current->state;
@@ -354,10 +372,10 @@ static const struct state_definition client_statbl[] = {
     },
     {
         .state = UPDATE,
-        .on_arrival = empty_function,
+        .on_arrival = delete_mails,
         .on_departure = empty_function,
-        .on_read_ready = empty_function2,
-        .on_write_ready = empty_function2,
+        .on_read_ready = go_to_done,
+        .on_write_ready = go_to_done,
     },
     {
         .state = DONE,

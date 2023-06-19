@@ -59,7 +59,7 @@ static command_type transaction_commands[TR_COMMAND_QTY] = {
     {.command_id = "DELE", .command_handler = &dele_handler},
     {.command_id = "RSET", .command_handler = &rset_handler},
     {.command_id = "CAPA", .command_handler = &trans_capa_handler},
-    {.command_id = "QUIT", .command_handler = &noop},
+    {.command_id = "QUIT", .command_handler = &trans_quit_handler},
 };
 
 static command_type* commands_per_state[STATE_QTY] = {auth_commands, transaction_commands};
@@ -85,6 +85,11 @@ int validate_credentials(struct pop3 * p3, char * pass){
 unsigned int auth_quit_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
     write_to_buffer(AUTH_QUIT_MSG, b);
     return DONE;
+}
+
+unsigned int trans_quit_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
+    write_to_buffer(POSITIVE_MSG, b);
+    return UPDATE;
 }
 
 unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2){

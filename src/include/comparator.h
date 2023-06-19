@@ -31,6 +31,10 @@ unsigned int retr_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2);
 
 unsigned int auth_quit_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2);
 
+unsigned int trans_quit_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2);
+
 fn_type comparator(struct parser_event * pe, unsigned int curr_state);
+
+
 
 #endif 
