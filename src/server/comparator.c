@@ -30,6 +30,7 @@
 #define LOGIN_MSG "+OK Logged in.\r\n"
 #define STAT_FMT "+OK %u %ld\n"
 #define DELE_MSG "+OK message deleted\n"
+#define AUTH_QUIT_MSG "+OK closing connection\n"
 #define ALREADY_DELE_MSG "-ERR message already deleted\n"
 #define POSITIVE_MSG "+OK\n"
 #define NEGATIVE_MSG "-ERR\n"
@@ -47,7 +48,7 @@ static command_type auth_commands[AUTH_COMMAND_QTY] = {
     {.command_id = "CAPA", .command_handler = &auth_capa_handler},
     {.command_id = "USER", .command_handler = &user_handler},
     {.command_id = "PASS", .command_handler = &pass_handler},
-    {.command_id = "QUIT", .command_handler = &noop},
+    {.command_id = "QUIT", .command_handler = &auth_quit_handler},
 };
 
 static command_type transaction_commands[TR_COMMAND_QTY] = {
@@ -79,6 +80,11 @@ unsigned int write_to_buffer(char * str, buffer *b){
 //Devuelve 1 si cumplen las credenciales, 0 si hay algo mal
 int validate_credentials(struct pop3 * p3, char * pass){
     return !strcmp(p3->credentials->user, TEST_USER) && !strcmp(pass, TEST_PASS);
+}
+
+unsigned int auth_quit_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
+    write_to_buffer(AUTH_QUIT_MSG, b);
+    return DONE;
 }
 
 unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2){

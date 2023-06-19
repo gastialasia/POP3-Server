@@ -68,13 +68,17 @@ static void remove_client(int client_fd) {
 static void free_credentials(struct pop3 *s){
     free(s->credentials->pass);
     free(s->credentials->user);
-    free(s->credentials);
 }
 
 static void pop3_destroy(struct pop3 *s)
 {
-    free_mails(s);
-    free_credentials(s);
+    printf("Estoy en pop3_destroy\n");
+    if(s->credentials->user != NULL){
+        free_mails(s);
+        free_credentials(s);
+    }
+    free(s->mails);
+    free(s->credentials);
     parser_destroy(s->parser);
     remove_client(s->client_fd);
     connections--;
@@ -114,12 +118,12 @@ auth_init(const unsigned state, struct selector_key *key)
 static void
 trans_init(const unsigned state, struct selector_key *key)
 {
-    printf("Trans init\n");
     struct state_st *d = &ATTACHMENT(key)->client.state;
     d->rb = &(ATTACHMENT(key)->read_buffer);
     d->wb = &(ATTACHMENT(key)->write_buffer);
     d->parser = ATTACHMENT(key)->parser;
     struct pop3* p3 = ATTACHMENT(key);
+    //p3->mails = malloc(BLOCK*sizeof(struct mail_t*));
     if(p3->max_index == 0){ //chequeo para no volver a cargar todos los mails denuevo
         load_mails(p3);
     }
@@ -128,7 +132,6 @@ trans_init(const unsigned state, struct selector_key *key)
 static void 
 reading_init(const unsigned state, struct selector_key *key)
 {
-    printf("Reading init\n");
     struct mail_st *d = &ATTACHMENT(key)->client.mail;
     d->rb = &(ATTACHMENT(key)->read_buffer);
     d->wb = &(ATTACHMENT(key)->write_buffer);
@@ -141,7 +144,6 @@ reading_init(const unsigned state, struct selector_key *key)
 
 static unsigned client_read(struct selector_key *key)
 {
-    printf("Client read\n");
     struct state_st *d = &ATTACHMENT(key)->client.state;
     unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
     //bool error = false;
@@ -198,7 +200,6 @@ static int byte_stuffer(char input, int* state){
 
 static unsigned filesystem_read(struct selector_key *key)
 {
-    printf("llegue a filesystem read\n");
     struct pop3* p3 = ATTACHMENT(key);
     struct mail_st *d = &ATTACHMENT(key)->client.mail;
     unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
@@ -241,17 +242,12 @@ static unsigned filesystem_read(struct selector_key *key)
 }
 
 static unsigned client_write(struct selector_key *key) { // key corresponde a un client_fd
-    
-    printf("Client write\n");
     struct state_st *d = &ATTACHMENT(key)->client.state;
     unsigned ret = ATTACHMENT(key)->stm.current->state;
     uint8_t  *ptr;
     size_t   count;
     ssize_t  n;
-
-    printf("estoy en write con estado: %u\n", ret);
     ptr = buffer_read_ptr(d->wb, &count);
-    printf("llegue al send\n");
     // esto deberia llamarse cuando el select lo despierta y sabe que se puede escribir al menos 1 byte, por eso no checkeamos el EWOULDBLOCK
     n = send(key->fd, ptr, count, MSG_NOSIGNAL);
     if (n == -1) {
@@ -272,17 +268,12 @@ static unsigned client_write(struct selector_key *key) { // key corresponde a un
 }
 
 static unsigned mail_write(struct selector_key *key) { // key corresponde a un client_fd
-    
-    printf("Mail write\n");
     struct mail_st *d = &ATTACHMENT(key)->client.mail;
     unsigned ret = ATTACHMENT(key)->stm.current->state;
     uint8_t  *ptr;
     size_t   count;
     ssize_t  n;
-
-    printf("estoy en write con estado: %u\n", ret);
     ptr = buffer_read_ptr(d->wb, &count);
-    printf("llegue al send\n");
     // esto deberia llamarse cuando el select lo despierta y sabe que se puede escribir al menos 1 byte, por eso no checkeamos el EWOULDBLOCK
     n = send(d->socket_fd, ptr, count, MSG_NOSIGNAL);
     if (n == -1) {
@@ -291,7 +282,6 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
         buffer_read_adv(d->wb, n);
         // si terminamos de mandar toda la response del HELLO, hacemos transicion HELLO_WRITE -> AUTH_READ o HELLO_WRITE -> REQUEST_READ
         if (!buffer_can_read(d->wb)) {
-            printf("Se acabo el buffer, seteo INTEREST del file en lectura\n");
             if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_READ)) {
                 ret = READING_MAIL;
             } else {
@@ -301,9 +291,7 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
     }
 
     if (d->done){
-        printf("Finished, unregistering fd\n");
         selector_unregister_fd(key->s, d->mail_fd);
-        printf("Desregistered\n");
         d->done = 0;
         buffer_reset(d->rb);
         buffer_reset(d->wb);
@@ -329,10 +317,10 @@ static void error_function(const unsigned state, struct selector_key *key){
     return ;
 }
 
-
-/*static void print_current_state(const unsigned state, struct selector_key *key){
-    printf("LLegue a transaction\n");
-}*/
+static void close_connection(const unsigned state, struct selector_key *key){
+    //pop3_destroy(ATTACHMENT(key));
+    return ;
+}
 
 
 /** definición de handlers para cada estado */
@@ -373,7 +361,7 @@ static const struct state_definition client_statbl[] = {
     },
     {
         .state = DONE,
-        .on_arrival = empty_function,
+        .on_arrival = close_connection,
         .on_departure = empty_function,
         .on_read_ready = empty_function2,
     },
@@ -419,7 +407,7 @@ static struct pop3 *pop3_new(int client_fd)
     ret->stm.initial = AUTH;
     ret->stm.max_state = ERROR;
     ret->stm.states = pop3_describe_states();
-    ret->credentials = malloc(sizeof(struct credentials_t));
+    ret->credentials = calloc(1, sizeof(struct credentials_t));
     ret->parser = create_parser();
     ret->mails = malloc(BLOCK*sizeof(struct mail_t*));
     stm_init(&ret->stm);
@@ -476,7 +464,7 @@ pop3_read(struct selector_key *key)
 {
     struct state_machine *stm = &ATTACHMENT(key)->stm;
     const enum pop3state st = stm_handler_read(stm, key);
-
+    //printf("ENTRE AL READDDDDDD\n");
     if (ERROR == st || DONE == st)
     {
         pop3_done(key);
@@ -488,7 +476,7 @@ pop3_write(struct selector_key *key)
 {
     struct state_machine *stm = &ATTACHMENT(key)->stm;
     const enum pop3state st = stm_handler_write(stm, key);
-
+    //printf("ENTRE AL WRITEEEEEEE\n");
     if (ERROR == st || DONE == st)
     {
         pop3_done(key);
@@ -517,6 +505,7 @@ static void pop3_close(struct selector_key *key)
 static void
 pop3_done(struct selector_key *key)
 {
+    printf("Estoy en pop3_done\n");
     const int fds[] = {
         ATTACHMENT(key)->client_fd,
     };

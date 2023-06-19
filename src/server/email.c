@@ -92,5 +92,4 @@ void free_mails(struct pop3 * p3) {
         free(p3->mails[i]->file_path);
         free(p3->mails[i]);
     }
-        free(p3->mails);
 }
