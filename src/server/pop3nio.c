@@ -264,6 +264,9 @@ static unsigned client_write(struct selector_key *key) { // key corresponde a un
             }
         }
     }
+    if(ret==UPDATE){
+        return DONE;
+    }
     return ret;
 }
 
@@ -375,7 +378,7 @@ static const struct state_definition client_statbl[] = {
         .on_arrival = delete_mails,
         .on_departure = empty_function,
         .on_read_ready = go_to_done,
-        .on_write_ready = go_to_done,
+        .on_write_ready = client_write,
     },
     {
         .state = DONE,
