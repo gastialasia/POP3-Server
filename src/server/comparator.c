@@ -99,6 +99,7 @@ unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2){
 }
 
 unsigned int retr_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
+    load_mails(p3);
     struct mail_t** aux = p3->mails;
     if(arg1 != NULL){
         unsigned int index = atoi(arg1);

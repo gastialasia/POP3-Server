@@ -25,6 +25,8 @@
 #include "../include/email.h"
 
 #define N(x) (sizeof(x) / sizeof((x)[0]))
+#define CR '\r'
+#define LF '\n'
 
 // Variable globales
 static unsigned int connections = 0; // live qty of connections
@@ -178,15 +180,15 @@ static unsigned client_read(struct selector_key *key)
 }
 
 static int byte_stuffer(char input, int* state){
-    if (input == '+' && *state == 0) {
+    if (input == CR && *state == 0) {
         *state = 1;
-    } else if (input == '-' && *state == 1) {
+    } else if (input == LF && *state == 1) {
         *state = 2;
     } else if (input == '.' && *state == 2) {
         *state = 3;
-    } else if (input == '+' && *state == 3) {
+    } else if (input == CR && *state == 3) {
         *state = 4;
-    } else if (input == '-' && *state == 4) {
+    } else if (input == LF && *state == 4) {
         printf("\nTERMINE\n");
         return 1;
     } else {
