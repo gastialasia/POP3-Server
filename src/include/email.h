@@ -9,7 +9,6 @@
 //Estructura para procesar mails al entrar al pasar a TRANSACTION
 struct mail_t{
     char * file_path;
-    char marked_del; //flag para borrar el mail
     size_t size;
 };
 

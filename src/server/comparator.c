@@ -88,6 +88,7 @@ unsigned int auth_quit_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2)
 }
 
 unsigned int trans_quit_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
+    //free_mails(p3);
     write_to_buffer(POSITIVE_MSG, b);
     return UPDATE;
 }
@@ -109,7 +110,7 @@ unsigned int retr_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
             write_to_buffer(NO_MSG_MSG, b);
             return TRANSACTION;
         }
-        if(aux[index-1]->marked_del){
+        if(p3->dele_flags[index-1]){
             write_to_buffer(ALREADY_DELE_MSG, b);
             return TRANSACTION;
         }
@@ -137,7 +138,8 @@ unsigned int retr_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
 }
 
 unsigned int dele_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
-    struct mail_t** aux = p3->mails;
+    load_mails(p3);
+    //struct mail_t** aux = p3->mails;
     if(arg1 != NULL){
         unsigned int index = atoi(arg1);
         if (index==0){
@@ -148,24 +150,25 @@ unsigned int dele_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
             write_to_buffer(NO_MSG_MSG, b);
             return TRANSACTION;
         }
-        if(aux[index-1]->marked_del){
+        if(p3->dele_flags[index-1]){
             write_to_buffer(ALREADY_DELE_MSG, b);
             return TRANSACTION;
         }
-        aux[index-1]->marked_del = 1;
+        // aux[index-1]->marked_del = 1; Ahora guardamos esto en el array de dele_flags
+        p3->dele_flags[index-1] = 1;
         p3->mail_qty--;
-        p3->total_octates -= aux[index-1]->size;
+        p3->total_octates -= p3->mails[index-1]->size;
         write_to_buffer(DELE_MSG, b);
     } else {
         write_to_buffer(INVALID_INDEX_MSG, b);
     }
+    printf("Borrado. mail_qty=%d, total_octates=%lu\n", p3->mail_qty, p3->total_octates);
     return p3->stm.current->state;
 }
 
 unsigned int rset_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
-    struct mail_t** aux = p3->mails;
     for(unsigned i=0; i<=p3->max_index; i++){
-        aux[i]->marked_del = 0;
+        p3->dele_flags[i] = 0;
     }
     p3->mail_qty = p3->max_index + 1;
     p3->total_octates = p3->original_total_octates;
@@ -185,7 +188,8 @@ unsigned int list_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
             write_to_buffer(INVALID_INDEX_MSG, b);
             return TRANSACTION;
         }
-        if(!p3->mails[index-1]->marked_del){
+        if(!p3->dele_flags[index-1]){
+            
             sprintf(list_msg, STAT_FMT, index, p3->mails[index-1]->size);  //Si me pasan 1, quiero mails[0]
             write_to_buffer(list_msg, b);
         } else {
@@ -200,7 +204,7 @@ unsigned int list_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
         sprintf(list_msg, LIST_FMT, p3->mail_qty, p3->total_octates); 
         write_to_buffer(list_msg, b);
         for(unsigned i=0; i <= p3->max_index; i++){
-            if(!p3->mails[i]->marked_del){
+            if(!p3->dele_flags[i]){
                 sprintf(list_msg, "%u %ld\n",i+1,p3->mails[i]->size);
                 write_to_buffer(list_msg, b); 
             }

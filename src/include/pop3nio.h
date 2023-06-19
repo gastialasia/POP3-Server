@@ -69,6 +69,8 @@ struct pop3
 
     struct mail_t ** mails;
 
+    uint8_t * dele_flags;
+
     struct parser * parser;
     
     struct pop3 *next;

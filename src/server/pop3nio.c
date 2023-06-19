@@ -77,6 +77,7 @@ static void pop3_destroy(struct pop3 *s)
         free(s->credentials->user);
     } 
     free(s->mails);
+    free(s->dele_flags); //Agregue el free para los flags
     free(s->credentials);
     parser_destroy(s->parser);
     remove_client(s->client_fd);
@@ -305,8 +306,8 @@ static void empty_function(const unsigned state, struct selector_key *key){
 static void delete_mails(const unsigned state, struct selector_key *key){
     struct pop3 * p3 = ATTACHMENT(key);
     for(unsigned int i=0; i<=p3->max_index; i++){
-        if(p3->mails[i]->marked_del){
-            //char * path = p3->mails[i]->file_path;
+        if(p3->dele_flags[i]){
+            //Si el mail tiene el flag activado, lo borro
             remove(p3->mails[i]->file_path);
         }
     }
@@ -316,8 +317,6 @@ static void delete_mails(const unsigned state, struct selector_key *key){
 static unsigned go_to_done(struct selector_key *key){
     return DONE;
 }
-
-
 
 
 static unsigned empty_function2(struct selector_key *key){
@@ -423,6 +422,7 @@ static struct pop3 *pop3_new(int client_fd)
     ret->credentials = calloc(1, sizeof(struct credentials_t));
     ret->parser = create_parser();
     ret->mails = malloc(BLOCK*sizeof(struct mail_t*));
+    ret->dele_flags = calloc(1,BLOCK*sizeof(uint8_t));
     stm_init(&ret->stm);
 
     buffer_init(&ret->read_buffer, N(ret->raw_buff_a), ret->raw_buff_a);
