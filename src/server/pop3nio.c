@@ -65,18 +65,16 @@ static void remove_client(int client_fd) {
 }
 
 
-static void free_credentials(struct pop3 *s){
-    free(s->credentials->pass);
-    free(s->credentials->user);
-}
-
 static void pop3_destroy(struct pop3 *s)
 {
     printf("Estoy en pop3_destroy\n");
-    if(s->credentials->user != NULL){
+    if(s->credentials->pass!=NULL){
+        free(s->credentials->user);
+        free(s->credentials->pass);
         free_mails(s);
-        free_credentials(s);
-    }
+    } else if (s->credentials->user!=NULL){
+        free(s->credentials->user);
+    } 
     free(s->mails);
     free(s->credentials);
     parser_destroy(s->parser);
