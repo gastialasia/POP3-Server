@@ -1,5 +1,6 @@
 //email.c: Email managing functions, such as navigating between paths
 
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -12,6 +13,22 @@
 #define BLOCK 20
 
 char* path_to_maildir = INITIAL_PATH;
+
+int change_maildir(char * new_path){
+  if(strcmp(path_to_maildir,INITIAL_PATH) != 0){
+    free(path_to_maildir);//hago un free de un path viejo
+  }
+  int len = strlen(new_path) + 1;
+  char * path = malloc(len);
+  if(path == NULL){
+    return -1;
+  }
+  strcpy(path,new_path);
+  path_to_maildir = path;
+  return 0;
+}
+
+
 
 DIR* open_maildir(struct pop3* p3, char* path){
     size_t user_len = strlen(p3->credentials->user);

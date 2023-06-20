@@ -21,4 +21,6 @@ void load_mails(struct pop3 * p3);
 
 void free_mails(struct pop3 * p3);
 
+int change_maildir(char * new_path);
+
 #endif

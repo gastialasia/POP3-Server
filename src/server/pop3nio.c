@@ -30,8 +30,8 @@
 
 // Variable globales
 static unsigned int connections = 0; // live qty of connections
-//static unsigned historic_connections = 0; //aumenta cada vez que se establece una conexion
-//static size_t transfer_bytes = 0; //aumentar despues de un send
+static unsigned historic_connections = 0; //aumenta cada vez que se establece una conexion
+static size_t transfer_bytes = 0; //aumentar despues de un send
 static struct pop3 *head_connection = NULL;
 //path a la carpeta donde estan los directorios de todos los usuarios
 
@@ -66,6 +66,20 @@ static void remove_client(int client_fd) {
     head_connection = remove_client_rec(head_connection, client_fd);
 }
 
+unsigned get_current(){
+  return connections;
+}
+//@TODO agregar sems
+unsigned get_historic(){
+  return historic_connections;
+}
+
+size_t get_transfer_bytes(){
+  return transfer_bytes;
+}
+int change_buf_size(char * new_buf){
+  return 0;
+}
 
 static void pop3_destroy(struct pop3 *s)
 {

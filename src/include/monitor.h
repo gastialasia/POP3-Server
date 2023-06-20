@@ -2,6 +2,8 @@
 #define MONITOR_H
 
 #include <stdint.h>
+#include <stdbool.h>
+#include "buffer.h"
 #define MAX_NAME 5
 #define TOKEN_SIZE 15
 #define MAX_PATH 255
@@ -72,9 +74,9 @@ struct add_admin{
 };
 
 union data{
-  char       user_to_del[MAX_NAME];//se va a usar para eliminar a un admin
+  char             user_to_del[MAX_NAME];//se va a usar para eliminar a un admin
   char             change_maildir[MAX_PATH];
-  unsigned         new_size;
+  char             new_size[6]; //5 + \0
   struct add_admin admin_to_add;
 };
 
@@ -96,11 +98,15 @@ struct monitor_parser {
   enum monitor_state state;
   uint16_t len; //bytes que tiene que leer
   uint16_t read; // bytes ya leidos
+  int finish_user;
 };
 
 // Init del parser
 void monitor_init_parser(struct monitor_parser *p);
-
-
+enum monitor_state monitor_consume(buffer *b, struct monitor_parser *p);
+bool monitor_has_finish(enum monitor_state st);
+enum monitor_state monitor_parser_feed(struct monitor_parser *p, uint8_t c);
+int monitor_error_handler(struct monitor_parser *p, buffer *b);
+int monitor_response_handler(buffer *b,const enum response_code_status status, uint16_t dlen, void *data,bool is_number);
 
 #endif // !MONITOR_H
