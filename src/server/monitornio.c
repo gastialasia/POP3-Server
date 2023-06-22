@@ -145,7 +145,7 @@ fail:
     close(client_fd);
   }
 // funcion para cerrar la conexion lo quivalente al destroy
-  // admin_connection_destroy(admin);
+   admin_connection_destroy(admin);
 }
 
 static void monitor_read(struct selector_key * key){
@@ -250,23 +250,23 @@ int remove_admin(char * username){
 }
 
 
-int add_new_admin(struct add_admin new){
+int add_new_admin(char * user, char * token){
   if(current_admins >= MAX_ADMIN){
     return 1;
   }
   //hacer un define del largo
-  if(strlen(new.token) != 15){
+  if(strlen(token) != 15){
     return -1; //token malo
   }
   //checkeo x si ya existe el username del admin
   for(size_t i =0; i < current_admins; i++){
-    if(strcmp(new.user, all_admin_data[i].user)){
+    if(strcmp(user, all_admin_data[i].user)){
       return -1;
     }
   }
   //TODO decidir el largo del username 
-  strncpy(all_admin_data[current_admins].user, new.user, 5);
-  strncpy(all_admin_data[current_admins++].token, new.token, 16);
+  strncpy(all_admin_data[current_admins].user, user, 5);
+  strncpy(all_admin_data[current_admins++].token, token, 16);
   return 0;
 
 }
@@ -331,7 +331,7 @@ static void monitor_action(struct selector_key * key, struct monitor_st *d){
               break;
           }
           case monitor_config_add_admin: {
-             error_type = add_new_admin(d->parser.monitor->data.admin_to_add);
+             error_type = add_new_admin(d->parser.monitor->data.admin_to_add.user,d->parser.monitor->data.admin_to_add.token);
              d->status = monitor_status_success;
               break;
           }
