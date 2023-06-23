@@ -5,8 +5,8 @@
                                                             June 23, 2023
 
 
-                    Trabajo Práctico Especial 2023/1
-                               Revisión Monitoreo 0
+                    Trabajo Práctico Especial RFC Monitoreo 2023/1
+                        Revisión Monitoreo 0
 
 Introducion
 Este es un protoclo binario, no orientado a conexion y que corre sobre TCP.
@@ -14,24 +14,24 @@ Todos los caracteres aceptados por este protocolo son ASCII del alfabeto
 ingles.
 
 Terminologia
-TerminologíaLas palabras clave "DEBE", "NO DEBE", "OBLIGATORIO", "DEBERÁ"
-, "NODEBERÁ", "DEBERÍA", "NO DEBERÍA", "RECOMENDADO", "PUEDE" y "OPCIONAL"
+TerminologíaLas palabras clave "DEBE", "NO DEBE", "OBLIGATORIO", "DEBERÁ",
+"NO DEBERÁ", "DEBERÍA", "NO DEBERÍA", "RECOMENDADO", "PUEDE" y "OPCIONAL"
 en este documento serán interpretadas como se describe en elRFC 2119[RFC21
 19].
 
 Tabla de Contenidos
 
-   1.  Rerquest  . . . . . . . . . . . . . . . . . . . . . . . . . .
+   1.  Request   . . . . . . . . . . . . . . . . . . . . . . . . . . 0
      1.a  Version  . . . . . . . . . . . . . . . . . . . . . . . . .
      1.b  Token  . . . . . . . . . . . . . . . . . . . . . . . . . .
      1.c  Tipo . . . . . . . . . . . . . . . . . . . . . . . . . . .
      1.d  Target . . . . . . . . . . . . . . . . . . . . . . . . . .
-     1.e  Dlen . . . . . . . . . . . . . . . . . . . . . . . . . . .
+     1.e  Dlen . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
      1.f  Data . . . . . . . . . . . . . . . . . . . . . . . . . . .
    2.  Response  . . . . . . . . . . . . . . . . . . . . . . . . . .
      2.a Status  . . . . . . . . . . . . . . . . . . . . . . . . . .
      2.b Data  . . . . . . . . . . . . . . . . . . . . . . . . . . .
-   3.  Ejemplos  . . . . . . . . . . . . . . . . . . . . . . . . . .
+   3.  Ejemplos  . . . . . . . . . . . . . . . . . . . . . . . . . . 3
 
 1 .Request
     VER | TOKEN | TIPO | TARGET | DLEN | DATA
@@ -45,6 +45,7 @@ Tabla de Contenidos
 1.c) TIPO:
     X'00' GET
     X'01' CONFIG
+
 1.d) TARGET:
     GET
         X'00'  cantidad de conexiones históricas
@@ -53,6 +54,13 @@ Tabla de Contenidos
     CONFIG
         X'00'  Configuracion of Maildir
         X'01'  Configuracion buffer size
+
+
+                                Monitoreo                       [Pag. 1]
+
+                Trabajo Práctico Especial RFC Monitoreo       June 2023
+
+
         X'02'  agregar usuario admin
         X'03'  borrar usuarios admin
         X'04'  agregar usuario pop3
@@ -104,6 +112,14 @@ Get conexiones historicas X'00'
 request
   VER |         TOKEN        | TIPO   | TARGET | DLEN | DATA
  X'01    "123456789abcdef1"     X'00'          X'00'   X'01'  X'00'
+
+
+
+                                Monitoreo                       [Pag. 2]
+
+                Trabajo Práctico Especial RFC Monitoreo       June 2023
+
+
 Response
  STATUS | DLEN | DATA
   X'00'   X'02'  X'100'
