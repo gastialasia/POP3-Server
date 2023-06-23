@@ -44,9 +44,9 @@ DIR* open_maildir(struct pop3* p3, char* path){
 
 char* read_mail(DIR* directory, struct pop3* p3, char* path){
     if(directory == NULL)
-        printf("Si, era NULL\n");
+        printf("Error opening directory\n");
     struct dirent* d = readdir(directory);
-    while(d != NULL && strcmp(d->d_name, "mail1")){
+    while(d != NULL){
         d = readdir(directory);
     }
         
@@ -106,17 +106,16 @@ void load_mails(struct pop3 * p3) {
             //Cargo mail en el array. Si hace falta, lo agrando
             if (i%BLOCK==0){
                 p3->mails = realloc(p3->mails, (BLOCK+i)*sizeof(struct mail_t*)); //realloco espacio para mails
-                //p3->dele_flags = realloc(p3->dele_flags, (BLOCK+i)*sizeof(u_int8_t)); //realloco espacio para flags
+                p3->dele_flags = realloc(p3->dele_flags, (BLOCK+i)*sizeof(u_int8_t)); //realloco espacio para flags
                 if (p3->mails==NULL||p3->dele_flags==NULL){
                     printf("ERROR: Not enough memory to load user mails\n");
                 }
-                /*for(unsigned int j=i; j<i+BLOCK; j++){
-                    p3->dele_flags[j]=0; //Asigno los flags en 0
-                }*/
+                for(unsigned int j=i; j<i+BLOCK; j++){
+                    p3->dele_flags[j]=0; //Seteo los flags recien creados en 0
+                }
             }
             
             p3->mails[i] = new; //Guardo mail en el array de mails
-            printf("Mail[%d] cargado (dele=%d) size=%lu\n", i, p3->dele_flags[i], new->size);
 
             if(!p3->dele_flags[i]){
                 //Si el mail no esta marcado como borrado:
@@ -131,9 +130,7 @@ void load_mails(struct pop3 * p3) {
     p3->max_index = i-1; //Le resto uno porque despues del while me quedo incrementado en 1
     p3->original_total_octates = p3->total_octates;
     closedir(directory);
-    printf("Termine de cargar mails\n");
     for(unsigned int i=0; i<=p3->max_index; i++){
-        printf("i=%d, flag[i]=%d,\n",i, p3->dele_flags[i]);
     }
 }
 

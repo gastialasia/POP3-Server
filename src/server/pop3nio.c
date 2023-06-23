@@ -457,7 +457,7 @@ static struct pop3 *pop3_new(int client_fd)
     ret->credentials = calloc(1, sizeof(struct credentials_t));
     ret->parser = create_parser();
     ret->mails = NULL;
-    ret->dele_flags = calloc(20,sizeof(uint8_t));
+    ret->dele_flags = NULL;
     stm_init(&ret->stm);
 
     buffer_init(&ret->read_buffer, N(ret->raw_buff_a), ret->raw_buff_a);

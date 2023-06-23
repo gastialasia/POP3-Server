@@ -117,7 +117,6 @@ unsigned int retr_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
         }
         p3->selected_mail = index-1;
         printf("el path es: %s\n", aux[p3->selected_mail]->file_path);
-        printf("estoy en el retr_handler\n");
         write_to_buffer(POSITIVE_MSG, b);
         //Abro el archivo
         int fd = open(p3->mails[p3->selected_mail]->file_path, O_RDONLY);
@@ -156,14 +155,11 @@ unsigned int dele_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
             return TRANSACTION;
         }
         // aux[index-1]->marked_del = 1; Ahora guardamos esto en el array de dele_flags
-        printf("Arriba\n");
         p3->dele_flags[index-1] = 1;
-        printf("Abajo\n");
         write_to_buffer(DELE_MSG, b);
     } else {
         write_to_buffer(INVALID_INDEX_MSG, b);
     }
-    printf("Borrado. mail_qty=%d, total_octates=%lu\n", p3->mail_qty, p3->total_octates);
     return p3->stm.current->state;
 }
 
@@ -202,11 +198,9 @@ unsigned int list_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
         }
     } else {
         //LIST sin argumentos
-        printf("List sin argumentos\n");
         sprintf(list_msg, LIST_FMT, p3->mail_qty, p3->total_octates); 
         write_to_buffer(list_msg, b);
         for(unsigned i=0; i <= p3->max_index; i++){
-            printf("%u, flag=%d\n", i, p3->dele_flags[i]);
             if(!p3->dele_flags[i]){
                 sprintf(list_msg, "%u %ld\n",i+1,p3->mails[i]->size);
                 write_to_buffer(list_msg, b); 
