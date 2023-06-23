@@ -1,10 +1,10 @@
-//Parser tokenizer: es responsable de consumir la entrada y separarla en un array [comando, argumento1, argumento2]
+// Parser tokenizer: es responsable de consumir la entrada y separarla en un array [comando, argumento1, argumento2]
 
 #include "../include/tokenizer.h"
 
 struct parser *create_parser()
 {
-    size_t *transition_qty = malloc(sizeof(size_t) * STATEQTY);                                                  // Cant de transiciones por cada nodo.
+    size_t *transition_qty = malloc(sizeof(size_t) * STATEQTY);                                            // Cant de transiciones por cada nodo.
     struct parser_state_transition **states = malloc(sizeof(struct parser_state_transition *) * STATEQTY); // Lista de nodos
 
     // COMANDO
@@ -107,7 +107,7 @@ struct parser *create_parser()
     error[1].dest = ERR0R_STATE;
     error[1].act1 = NULL;
 
-    struct parser_definition * parser_definition = malloc(sizeof(struct parser_definition));
+    struct parser_definition *parser_definition = malloc(sizeof(struct parser_definition));
 
     parser_definition->start_state = COMMAND_STATE;
     parser_definition->states = states;
@@ -117,11 +117,13 @@ struct parser *create_parser()
     return parser_init(parser_no_classes(), parser_definition);
 }
 
-void completed(struct parser_event *event, const uint8_t c){
-    if(event->commands[0] == NULL){
+void completed(struct parser_event *event, const uint8_t c)
+{
+    if (event->commands[0] == NULL)
+    {
         event->commands[0] = calloc(1, sizeof(char));
     }
-    event->complete = 1; //true
+    event->complete = 1; // true
     event->index = 0;
 }
 
@@ -162,14 +164,17 @@ void store_second_arg(struct parser_event *event, const uint8_t c)
     event->commands[2][(event->index)] = '\0';
 }
 
-void restart_tokenizer(struct parser_event * pe) {
+void restart_tokenizer(struct parser_event *pe)
+{
     pe->complete = 0;
     free_commands_array(pe);
 }
 
-void free_commands_array(struct parser_event * pe){
-    for(int i=0; i<3; i++) {
+void free_commands_array(struct parser_event *pe)
+{
+    for (int i = 0; i < 3; i++)
+    {
         free(pe->commands[i]);
-        pe->commands[i]=NULL;
+        pe->commands[i] = NULL;
     }
 }

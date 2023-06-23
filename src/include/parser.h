@@ -19,9 +19,9 @@
  */
 struct parser_event
 {
-    char * commands[3]; //->Comando y 2 argumentos
-    int index; //Alcanza para el max que es 40 caracteres por argumento.
-    uint8_t complete; //Marca si llegamos al estado final
+    char *commands[3]; //->Comando y 2 argumentos
+    int index;         // Alcanza para el max que es 40 caracteres por argumento.
+    uint8_t complete;  // Marca si llegamos al estado final
 
     /** lista de eventos: si es diferente de null ocurrieron varios eventos */
     struct parser_event *next;
@@ -84,8 +84,8 @@ parser_feed(struct parser *p, const uint8_t c);
 const unsigned *
 parser_no_classes(void);
 
-struct parser_event * get_last_event(struct parser *p);
+struct parser_event *get_last_event(struct parser *p);
 
-void free_parser_events_rec(struct parser_event * pe);
+void free_parser_events_rec(struct parser_event *pe);
 
 #endif

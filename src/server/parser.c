@@ -23,19 +23,21 @@ struct parser
 
 void parser_destroy(struct parser *p)
 {
-    free_parser_events_rec(&p->e1); //No esta cambiando nada
-    for(unsigned i=0; i<p->def->states_count; i++){
+    free_parser_events_rec(&p->e1); // No esta cambiando nada
+    for (unsigned i = 0; i < p->def->states_count; i++)
+    {
         free(p->def->states[i]);
     }
     free(p->def->states);
     free(p->def->states_n);
     free(p->def);
-    if (p!=NULL){
+    if (p != NULL)
+    {
         free(p);
     }
 }
 
-struct parser * parser_init(const unsigned *classes, struct parser_definition *def)
+struct parser *parser_init(const unsigned *classes, struct parser_definition *def)
 {
     struct parser *ret = malloc(sizeof(*ret));
     if (ret != NULL)
@@ -56,19 +58,18 @@ void parser_reset(struct parser *p)
 struct parser_event *
 parser_feed(struct parser *p, const uint8_t c)
 {
-    //const unsigned type = p->classes[c];
+    // const unsigned type = p->classes[c];
 
     p->e1.next = 0;
-    
+
     const struct parser_state_transition *state = p->def->states[p->state];
     const size_t n = p->def->states_n[p->state];
     bool matched = false;
 
-
     for (unsigned i = 0; i < n; i++)
     {
         const int when = state[i].when;
-        
+
         if (state[i].when <= 0xFF)
         {
             matched = (c == when);
@@ -84,7 +85,8 @@ parser_feed(struct parser *p, const uint8_t c)
 
         if (matched)
         {
-            if(state[i].act1!=NULL){
+            if (state[i].act1 != NULL)
+            {
                 state[i].act1(&p->e1, c);
             }
             p->state = state[i].dest;
@@ -95,9 +97,11 @@ parser_feed(struct parser *p, const uint8_t c)
     return &p->e1;
 }
 
-struct parser_event * get_last_event(struct parser *p){
-    struct parser_event * aux = &p->e1;
-    while (aux->next != NULL) {
+struct parser_event *get_last_event(struct parser *p)
+{
+    struct parser_event *aux = &p->e1;
+    while (aux->next != NULL)
+    {
         aux = aux->next;
     }
     return aux;
@@ -111,12 +115,12 @@ parser_no_classes(void)
     return classes;
 }
 
-void free_parser_events_rec(struct parser_event * pe){
-    if(pe->next==NULL){
+void free_parser_events_rec(struct parser_event *pe)
+{
+    if (pe->next == NULL)
+    {
         return;
     }
     free_parser_events_rec(pe->next);
     free(pe);
 }
-
-

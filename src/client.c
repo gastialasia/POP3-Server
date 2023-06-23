@@ -4,16 +4,15 @@
 #include <string.h>
 #include <sys/socket.h>
 
-#define BASE_RESPONSE_DATA      3
+#define BASE_RESPONSE_DATA 3
 
-
-int
-main(const int argc, char **argv) {
-    struct client_request_args  args[MAX_CLIENT_REQUESTS] = {0};
-    struct sockaddr_in          sin4;
-    struct sockaddr_in6         sin6;
-    enum ip_version             ip_version;
-    char                        token[TOKEN_SIZE];
+int main(const int argc, char **argv)
+{
+    struct client_request_args args[MAX_CLIENT_REQUESTS] = {0};
+    struct sockaddr_in sin4;
+    struct sockaddr_in6 sin6;
+    enum ip_version ip_version;
+    char token[TOKEN_SIZE];
 
     size_t arg_amount = parse_args(argc, argv, args, token, &sin4, &sin6, &ip_version);
 
@@ -28,49 +27,60 @@ main(const int argc, char **argv) {
 
     int sock_fd;
 
-    for(size_t i=0 ; i < arg_amount ; i++){
-        if(ip_version == ipv4){
-            if((sock_fd = socket(sin4.sin_family, SOCK_STREAM, IPPROTO_TCP)) < 0){
+    for (size_t i = 0; i < arg_amount; i++)
+    {
+        if (ip_version == ipv4)
+        {
+            if ((sock_fd = socket(sin4.sin_family, SOCK_STREAM, IPPROTO_TCP)) < 0)
+            {
                 perror("client socket ipv4 creation");
                 return 1;
             }
-        
-            if(connect(sock_fd, (struct sockaddr *)&sin4, sizeof(sin4)) < 0){
+
+            if (connect(sock_fd, (struct sockaddr *)&sin4, sizeof(sin4)) < 0)
+            {
                 perror("client socket ipv4 connect");
                 return 1;
             }
-        } else {
-            if((sock_fd = socket(sin6.sin6_family, SOCK_STREAM, IPPROTO_TCP)) < 0){
+        }
+        else
+        {
+            if ((sock_fd = socket(sin6.sin6_family, SOCK_STREAM, IPPROTO_TCP)) < 0)
+            {
                 perror("client socket ipv6 creation");
                 return 1;
             }
-        
-            if(connect(sock_fd, (struct sockaddr *)&sin6, sizeof(sin6)) < 0){
+
+            if (connect(sock_fd, (struct sockaddr *)&sin6, sizeof(sin6)) < 0)
+            {
                 perror("client socket ipv6 connect");
                 return 1;
             }
         }
-    
+
         serialize_request(&args[i], token, writeBuffer);
-                                // version 1 + token 2 + method 1 + target 1 + dlen 2 + data length
-        if(send(sock_fd, &writeBuffer, BASE_REQUEST_DATA + args[i].dlen, 0) < 0){
+        // version 1 + token 2 + method 1 + target 1 + dlen 2 + data length
+        if (send(sock_fd, &writeBuffer, BASE_REQUEST_DATA + args[i].dlen, 0) < 0)
+        {
             perror("client socket send");
             return 1;
         }
-        
-        long n = -1; 
-        while ((n = recv(sock_fd, buf, BASE_RESPONSE_DATA + MAX_BYTES_DATA, 0)) != 0) {
-            if (n < 0) {
+
+        long n = -1;
+        while ((n = recv(sock_fd, buf, BASE_RESPONSE_DATA + MAX_BYTES_DATA, 0)) != 0)
+        {
+            if (n < 0)
+            {
                 perror("client socket recv");
                 abort();
             }
         }
 
         // termine de recibir
-        process_response(buf[0], &args[i], buf,combinedlen, numeric_data_array, &numeric_response);
+        process_response(buf[0], &args[i], buf, combinedlen, numeric_data_array, &numeric_response);
 
-
-        if(close(sock_fd) < 0){
+        if (close(sock_fd) < 0)
+        {
             perror("client socket close");
             return 1;
         }

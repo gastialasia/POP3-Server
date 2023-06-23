@@ -1,4 +1,4 @@
-//Parser tokenizer: es responsable de consumir la entrada y separarla en un array [comando, argumento1, argumento2]
+// Parser tokenizer: es responsable de consumir la entrada y separarla en un array [comando, argumento1, argumento2]
 
 #include "../include/mail_tokenizer.h"
 #include <stdlib.h>
@@ -8,7 +8,7 @@
 
 struct parser *create_mail_parser()
 {
-    size_t *transition_qty = malloc(sizeof(size_t) * STATEQTY);                                                  // Cant de transiciones por cada nodo.
+    size_t *transition_qty = malloc(sizeof(size_t) * STATEQTY);                                            // Cant de transiciones por cada nodo.
     struct parser_state_transition **states = malloc(sizeof(struct parser_state_transition *) * STATEQTY); // Lista de nodos
 
     // NEW_LINE
@@ -19,7 +19,7 @@ struct parser *create_mail_parser()
 
     new_line[0].when = '.';
     new_line[0].dest = DOT;
-    new_line[0].act1 = NULL; 
+    new_line[0].act1 = NULL;
 
     new_line[1].when = ANY;
     new_line[1].dest = BYTE;
@@ -81,9 +81,9 @@ struct parser *create_mail_parser()
     cr[1].dest = NEW_LINE;
     cr[1].act1 = NULL;
 
-    //Creacion del parser_definition
+    // Creacion del parser_definition
 
-    struct parser_definition * parser_definition = malloc(sizeof(struct parser_definition));
+    struct parser_definition *parser_definition = malloc(sizeof(struct parser_definition));
 
     parser_definition->start_state = NEW_LINE;
     parser_definition->states = states;

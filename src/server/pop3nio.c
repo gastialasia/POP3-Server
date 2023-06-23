@@ -31,12 +31,12 @@
 #define MAX_MAILS 30
 
 // Variable globales
-static unsigned int connections = 0; // live qty of connections
-static unsigned historic_connections = 0; //aumenta cada vez que se establece una conexion
-static size_t transfer_bytes = 0; //aumentar despues de un send
+static unsigned int connections = 0;      // live qty of connections
+static unsigned historic_connections = 0; // aumenta cada vez que se establece una conexion
+static size_t transfer_bytes = 0;         // aumentar despues de un send
 static struct pop3 *head_connection = NULL;
-//path a la carpeta donde estan los directorios de todos los usuarios
-extern struct client_t * clients;
+// path a la carpeta donde estan los directorios de todos los usuarios
+extern struct client_t *clients;
 
 /*
  * Si bien cada estado tiene su propio struct que le da un alcance
@@ -49,17 +49,20 @@ extern struct client_t * clients;
 
 /** realmente destruye */
 
-
-void unregister_clients(struct client_t *c){
-    if(c == NULL){
+void unregister_clients(struct client_t *c)
+{
+    if (c == NULL)
+    {
         return;
     }
     c = unregister_clients_rec(c);
-} 
+}
 
-struct client_t * unregister_clients_rec(struct client_t *c){
-    while(c != NULL){
-        struct client_t * aux = c->next;
+struct client_t *unregister_clients_rec(struct client_t *c)
+{
+    while (c != NULL)
+    {
+        struct client_t *aux = c->next;
         free(c->user);
         free(c->pass);
         free(c);
@@ -68,12 +71,15 @@ struct client_t * unregister_clients_rec(struct client_t *c){
     return NULL;
 }
 
-static struct pop3* remove_client_rec(struct pop3* s, int client_fd) {
-    if (s == NULL) {
+static struct pop3 *remove_client_rec(struct pop3 *s, int client_fd)
+{
+    if (s == NULL)
+    {
         return NULL;
     }
-    if(s->client_fd == client_fd){
-        struct pop3* aux = s->next;
+    if (s->client_fd == client_fd)
+    {
+        struct pop3 *aux = s->next;
         free(s);
         return aux;
     }
@@ -81,112 +87,134 @@ static struct pop3* remove_client_rec(struct pop3* s, int client_fd) {
     return s;
 }
 
-static void remove_client(int client_fd) {
-    if (head_connection == NULL) {
+static void remove_client(int client_fd)
+{
+    if (head_connection == NULL)
+    {
         return;
     }
     head_connection = remove_client_rec(head_connection, client_fd);
 }
 
-uint32_t get_current(void){
-  return connections;
+uint32_t get_current(void)
+{
+    return connections;
 }
 //@TODO agregar sems
-uint32_t get_historic(void){
-  return historic_connections;
+uint32_t get_historic(void)
+{
+    return historic_connections;
 }
 
-size_t get_transfer_bytes(void){
-  return transfer_bytes;
+size_t get_transfer_bytes(void)
+{
+    return transfer_bytes;
 }
-int change_buf_size(char * new_buf){
-  return 0;
+int change_buf_size(char *new_buf)
+{
+    return 0;
 }
 
-static struct client_t * register_user_rec(struct client_t * c, char * user, char * pass, int * flag){
-    if(c == NULL){
-      struct client_t * new = malloc(sizeof(struct client_t));
-      new->user = malloc(sizeof(char)*(strlen(user) +1));
-      new->pass = malloc(sizeof(char)*(strlen(pass) +1));
-      strcpy(new->user, user);
-      strcpy(new->pass,pass);
-      new->next = NULL;
-      *flag = 0;
-      c = new;
-      return c;
+static struct client_t *register_user_rec(struct client_t *c, char *user, char *pass, int *flag)
+{
+    if (c == NULL)
+    {
+        struct client_t *new = malloc(sizeof(struct client_t));
+        new->user = malloc(sizeof(char) * (strlen(user) + 1));
+        new->pass = malloc(sizeof(char) * (strlen(pass) + 1));
+        strcpy(new->user, user);
+        strcpy(new->pass, pass);
+        new->next = NULL;
+        *flag = 0;
+        c = new;
+        return c;
     }
-    if(strcmp(c->user, user) == 0){
-      *flag = 1;
-      return c;
+    if (strcmp(c->user, user) == 0)
+    {
+        *flag = 1;
+        return c;
     }
     c->next = register_user_rec(c->next, user, pass, flag);
     return c;
 }
 
-int register_user(struct client_t * c, char * user, char * pass){
-  if(user == NULL || pass == NULL){
-    return 1;
-  }
-  int error = 1;
-  clients = register_user_rec(clients,user,pass,&error);
-  return error;
+int register_user(struct client_t *c, char *user, char *pass)
+{
+    if (user == NULL || pass == NULL)
+    {
+        return 1;
+    }
+    int error = 1;
+    clients = register_user_rec(clients, user, pass, &error);
+    return error;
 }
 
-struct client_t * unregister_user_rec(struct client_t * c, char * user, int * error){
-    if(c==NULL || user == NULL){
+struct client_t *unregister_user_rec(struct client_t *c, char *user, int *error)
+{
+    if (c == NULL || user == NULL)
+    {
         return c;
     }
-    if (strcmp(c->user, user)==0){
-        struct client_t * next = c->next; //Me guardo el siguiente
+    if (strcmp(c->user, user) == 0)
+    {
+        struct client_t *next = c->next; // Me guardo el siguiente
         free(c->pass);
         free(c->user);
-        free(c); //Borro el nodo actual
+        free(c); // Borro el nodo actual
         *error = 0;
-        return next; //Devuelvo el siguiente
+        return next; // Devuelvo el siguiente
     }
     c->next = unregister_user_rec(c->next, user, error);
     return c;
 }
 
-int unregister_user(struct client_t * c, char * user){
-    if(c==NULL || user==NULL){
+int unregister_user(struct client_t *c, char *user)
+{
+    if (c == NULL || user == NULL)
+    {
         return 1;
     }
-    int error = 1; //1 es error por default
+    int error = 1; // 1 es error por default
     c = unregister_user_rec(c, user, &error);
     return error;
 }
 
-
-//Devuelve 1 si el usuario esta registrado, 0 sino
-int validate_user(struct client_t * c, char * user, char * pass){
-    //Lo hago iterativo
-    struct client_t * aux = c;
-    while(aux!=NULL){
-        if(strcmp(aux->user, user)==0 && strcmp(aux->pass, pass)==0){
-            //El usuario esta registrado
+// Devuelve 1 si el usuario esta registrado, 0 sino
+int validate_user(struct client_t *c, char *user, char *pass)
+{
+    // Lo hago iterativo
+    struct client_t *aux = c;
+    while (aux != NULL)
+    {
+        if (strcmp(aux->user, user) == 0 && strcmp(aux->pass, pass) == 0)
+        {
+            // El usuario esta registrado
             return 1;
         }
         aux = aux->next;
     }
-    //El usuario no esta registrado
+    // El usuario no esta registrado
     return 0;
 }
 
 static void pop3_destroy(struct pop3 *s)
 {
-    if(s->credentials->pass!=NULL){
+    if (s->credentials->pass != NULL)
+    {
         printf("User %s has logged out\n", s->credentials->user);
         free(s->credentials->user);
         free(s->credentials->pass);
-    } else if (s->credentials->user!=NULL){
+    }
+    else if (s->credentials->user != NULL)
+    {
         free(s->credentials->user);
     }
-    if (s->mails!=NULL){
+    if (s->mails != NULL)
+    {
         free_mails(s);
         free(s->mails);
     }
-    free(s->dele_flags); //Agregue el free para los flags
+    free(s->dele_flags); // Agregue el free para los flags
     free(s->credentials);
     parser_destroy(s->parser);
     printf("A client has closed it's connection from fd: %d\n", s->client_fd);
@@ -224,11 +252,12 @@ static const struct fd_handler mail_handler = {
     .handle_block = pop3_block,
 };
 
-static void welcome_on_connection(buffer *b){
+static void welcome_on_connection(buffer *b)
+{
     size_t count;
-    char welcome[]="+OK Server ready\n";
+    char welcome[] = "+OK Server ready\n";
     size_t len = strlen(welcome);
-    uint8_t* buf = buffer_write_ptr(b, &count);
+    uint8_t *buf = buffer_write_ptr(b, &count);
     memcpy(buf, welcome, len);
     buffer_write_adv(b, len);
 }
@@ -240,7 +269,7 @@ auth_init(const unsigned state, struct selector_key *key)
     d->rb = &(ATTACHMENT(key)->read_buffer);
     d->wb = &(ATTACHMENT(key)->write_buffer);
     d->parser = ATTACHMENT(key)->parser;
-    //Mensaje de bienvenida
+    // Mensaje de bienvenida
     welcome_on_connection(d->wb);
 }
 
@@ -251,10 +280,9 @@ trans_init(const unsigned state, struct selector_key *key)
     d->rb = &(ATTACHMENT(key)->read_buffer);
     d->wb = &(ATTACHMENT(key)->write_buffer);
     d->parser = ATTACHMENT(key)->parser;
-    
 }
 
-static void 
+static void
 reading_init(const unsigned state, struct selector_key *key)
 {
     struct mail_st *d = &ATTACHMENT(key)->client.mail;
@@ -271,52 +299,72 @@ static unsigned client_read(struct selector_key *key)
 {
     struct state_st *d = &ATTACHMENT(key)->client.state;
     unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
-    //bool error = false;
+    // bool error = false;
     uint8_t *ptr;
     size_t count;
     ssize_t n;
     fn_type command_handler;
 
-    ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
-    
+    ptr = buffer_write_ptr(d->rb, &count); // Retorna un puntero en el que se puede escribir hasat nbytes
+
     n = recv(key->fd, ptr, count, 0);
-    if (n > 0){
-        buffer_write_adv(d->rb, n);    //Buffer: CAPA\r\n . CAPA\r\n
-        while(buffer_can_read(d->rb)) {
+    if (n > 0)
+    {
+        buffer_write_adv(d->rb, n); // Buffer: CAPA\r\n . CAPA\r\n
+        while (buffer_can_read(d->rb))
+        {
             const uint8_t c = buffer_read(d->rb);
             parser_feed(d->parser, c);
-            struct parser_event * pe = get_last_event(d->parser);
-            //funcion para fijarnos si termino de pasear
-            if (pe->complete) {
-                if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
-                    command_handler = comparator(pe, curr_state); //Esto tiene que devolver el estado grande al que vamos.
+            struct parser_event *pe = get_last_event(d->parser);
+            // funcion para fijarnos si termino de pasear
+            if (pe->complete)
+            {
+                if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE))
+                {
+                    command_handler = comparator(pe, curr_state); // Esto tiene que devolver el estado grande al que vamos.
                     curr_state = command_handler(d->wb, ATTACHMENT(key), pe->commands[1], pe->commands[2]);
                     restart_tokenizer(pe);
-                } else {
-                    curr_state = ERROR; //Si dio el selector
+                }
+                else
+                {
+                    curr_state = ERROR; // Si dio el selector
                 }
             }
         }
-    } else {
+    }
+    else
+    {
         curr_state = ERROR; // Si dio error el recv
     }
 
-    //return error ? ERROR : curr_state;
+    // return error ? ERROR : curr_state;
     return curr_state;
 }
 
-static int byte_stuffer(char input, int* state){
-    if (input == CR && *state == 0) {
+static int byte_stuffer(char input, int *state)
+{
+    if (input == CR && *state == 0)
+    {
         *state = 1;
-    } else if (input == LF && *state == 1) {
+    }
+    else if (input == LF && *state == 1)
+    {
         *state = 2;
-    } else if (input == '.' && *state == 2) {
+    }
+    else if (input == '.' && *state == 2)
+    {
         *state = 3;
-    } else if (input == CR && *state == 3) {
+    }
+    else if (input == CR && *state == 3)
+    {
         *state = 4;
-    } else if (input == LF && *state == 4) {
+    }
+    else if (input == LF && *state == 4)
+    {
         return 1;
-    } else {
+    }
+    else
+    {
         *state = 0;
     }
     return 0;
@@ -324,67 +372,82 @@ static int byte_stuffer(char input, int* state){
 
 static unsigned filesystem_read(struct selector_key *key)
 {
-    struct pop3* p3 = ATTACHMENT(key);
+    struct pop3 *p3 = ATTACHMENT(key);
     struct mail_st *d = &ATTACHMENT(key)->client.mail;
     unsigned int curr_state = ATTACHMENT(key)->stm.current->state;
     curr_state = WRITING_MAIL;
 
-    //buffer_reset(d->rb); //Reinicio el rb
+    // buffer_reset(d->rb); //Reinicio el rb
     uint8_t *ptr;
     size_t count;
     ssize_t n;
 
-    ptr = buffer_write_ptr(d->rb, &count); //Retorna un puntero en el que se puede escribir hasat nbytes
-    
+    ptr = buffer_write_ptr(d->rb, &count); // Retorna un puntero en el que se puede escribir hasat nbytes
+
     n = read(p3->selected_mail_fd, ptr, count);
-    if (n==0){
+    if (n == 0)
+    {
         curr_state = TRANSACTION;
-        //selector_unregister_fd(key->s, d->mail_fd);
+        // selector_unregister_fd(key->s, d->mail_fd);
     }
-    if (n > 0){                                                                        
-        buffer_write_adv(d->rb, n);                                                  
-        if(SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE)){
-            //BYTE STUFFING
-            while(buffer_can_read(d->rb)) {
-                const uint8_t c = buffer_read(d->rb);                                                   
-                //Byte stuffing
+    if (n > 0)
+    {
+        buffer_write_adv(d->rb, n);
+        if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_WRITE))
+        {
+            // BYTE STUFFING
+            while (buffer_can_read(d->rb))
+            {
+                const uint8_t c = buffer_read(d->rb);
+                // Byte stuffing
                 buffer_write(d->wb, c);
-                if(byte_stuffer(c, &d->byte_stuffing_st)){
+                if (byte_stuffer(c, &d->byte_stuffing_st))
+                {
                     buffer_write(d->wb, '\n');
                     d->done = true;
-                    //buffer_reset(d->rb); //Vacio el read buffer
-                    //curr_state = WRITING_MAIL;
+                    // buffer_reset(d->rb); //Vacio el read buffer
+                    // curr_state = WRITING_MAIL;
                     break;
                 }
             }
         }
-    } else {
+    }
+    else
+    {
         curr_state = ERROR; // Si dio error el recv
     }
 
     return curr_state;
 }
 
-static unsigned client_write(struct selector_key *key) { // key corresponde a un client_fd
+static unsigned client_write(struct selector_key *key)
+{ // key corresponde a un client_fd
     struct state_st *d = &ATTACHMENT(key)->client.state;
     unsigned ret = ATTACHMENT(key)->stm.current->state;
-    uint8_t  *ptr;
-    size_t   count;
-    ssize_t  n;
+    uint8_t *ptr;
+    size_t count;
+    ssize_t n;
     ptr = buffer_read_ptr(d->wb, &count);
     // esto deberia llamarse cuando el select lo despierta y sabe que se puede escribir al menos 1 byte, por eso no checkeamos el EWOULDBLOCK
     n = send(key->fd, ptr, count, MSG_NOSIGNAL);
-    if (n == -1) {
+    if (n == -1)
+    {
         ret = ERROR;
-    } else {
-        transfer_bytes += n; //agregamos a las statistics
+    }
+    else
+    {
+        transfer_bytes += n; // agregamos a las statistics
         buffer_read_adv(d->wb, n);
         // si terminamos de mandar toda la response del HELLO, hacemos transicion HELLO_WRITE -> AUTH_READ o HELLO_WRITE -> REQUEST_READ
-        if (!buffer_can_read(d->wb)) {
-            if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_READ)) {
+        if (!buffer_can_read(d->wb))
+        {
+            if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_READ))
+            {
                 // en caso de que haya fallado el handshake del hello, el cliente es el que cerrara la conexion
-                //ret = AUTH;//is_auth_on ? AUTH_READ : REQUEST_READ;
-            } else {
+                // ret = AUTH;//is_auth_on ? AUTH_READ : REQUEST_READ;
+            }
+            else
+            {
                 ret = ERROR;
             }
         }
@@ -392,33 +455,43 @@ static unsigned client_write(struct selector_key *key) { // key corresponde a un
     return ret == UPDATE ? DONE : ret;
 }
 
-static unsigned mail_write(struct selector_key *key) { // key corresponde a un client_fd
+static unsigned mail_write(struct selector_key *key)
+{ // key corresponde a un client_fd
     struct mail_st *d = &ATTACHMENT(key)->client.mail;
     unsigned ret = ATTACHMENT(key)->stm.current->state;
-    uint8_t  *ptr;
-    size_t   count;
-    ssize_t  n;
+    uint8_t *ptr;
+    size_t count;
+    ssize_t n;
     ptr = buffer_read_ptr(d->wb, &count);
     // esto deberia llamarse cuando el select lo despierta y sabe que se puede escribir al menos 1 byte, por eso no checkeamos el EWOULDBLOCK
     n = send(d->socket_fd, ptr, count, MSG_NOSIGNAL);
-    if (n == -1) {
-        if (errno==104){
+    if (n == -1)
+    {
+        if (errno == 104)
+        {
             ret = ERROR;
         }
-    } else {
-        transfer_bytes += n; //agregamos a las statistics
+    }
+    else
+    {
+        transfer_bytes += n; // agregamos a las statistics
         buffer_read_adv(d->wb, n);
         // si terminamos de mandar toda la response del HELLO, hacemos transicion HELLO_WRITE -> AUTH_READ o HELLO_WRITE -> REQUEST_READ
-        if (!buffer_can_read(d->wb)) {
-            if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_READ)) {
+        if (!buffer_can_read(d->wb))
+        {
+            if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_READ))
+            {
                 ret = READING_MAIL;
-            } else {
+            }
+            else
+            {
                 ret = ERROR;
             }
         }
     }
 
-    if (d->done){
+    if (d->done)
+    {
         selector_unregister_fd(key->s, d->mail_fd);
         d->done = 0;
         buffer_reset(d->rb);
@@ -426,9 +499,8 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
         return TRANSACTION;
     }
 
-    return ret; //READING_MAIL
+    return ret; // READING_MAIL
 }
-
 
 /*
 static void empty_function(const unsigned state, struct selector_key *key){
@@ -436,39 +508,43 @@ static void empty_function(const unsigned state, struct selector_key *key){
     return ;
 }*/
 
-static void delete_mails(const unsigned state, struct selector_key *key){
-    struct pop3 * p3 = ATTACHMENT(key);
-    for(unsigned int i=0; i<=p3->max_index; i++){
-        if(p3->dele_flags[i]){
-            //Si el mail tiene el flag activado, lo borro
+static void delete_mails(const unsigned state, struct selector_key *key)
+{
+    struct pop3 *p3 = ATTACHMENT(key);
+    for (unsigned int i = 0; i <= p3->max_index; i++)
+    {
+        if (p3->dele_flags[i])
+        {
+            // Si el mail tiene el flag activado, lo borro
             remove(p3->mails[i]->file_path);
         }
     }
-    return ;
+    return;
 }
 
-static unsigned go_to_done(struct selector_key *key){
+static unsigned go_to_done(struct selector_key *key)
+{
     return DONE;
 }
 
-
-static void error_function(const unsigned state, struct selector_key *key){
-    //printf("Error state\n");
-    return ;
+static void error_function(const unsigned state, struct selector_key *key)
+{
+    // printf("Error state\n");
+    return;
 }
 
-static void close_connection(const unsigned state, struct selector_key *key){
-    return ;
+static void close_connection(const unsigned state, struct selector_key *key)
+{
+    return;
 }
-
 
 /** definición de handlers para cada estado */
 static const struct state_definition client_statbl[] = {
     {
         .state = AUTH,
-        .on_arrival = auth_init, //Inicializar los parsers
-        .on_read_ready = client_read, //Se hace la lectura
-        .on_write_ready = client_write,//auth_write,
+        .on_arrival = auth_init,        // Inicializar los parsers
+        .on_read_ready = client_read,   // Se hace la lectura
+        .on_write_ready = client_write, // auth_write,
     },
     {
         .state = TRANSACTION,
@@ -514,7 +590,7 @@ static struct pop3 *pop3_new(int client_fd)
 
     if (ret == NULL)
         goto finally;
-    
+
     connections++;
     historic_connections++;
 
@@ -542,7 +618,7 @@ static struct pop3 *pop3_new(int client_fd)
     ret->credentials = calloc(1, sizeof(struct credentials_t));
     ret->parser = create_parser();
     ret->mails = NULL;
-    ret->dele_flags = calloc(MAX_MAILS,sizeof(uint8_t));
+    ret->dele_flags = calloc(MAX_MAILS, sizeof(uint8_t));
     stm_init(&ret->stm);
 
     buffer_init(&ret->read_buffer, N(ret->raw_buff_a), ret->raw_buff_a);
@@ -628,7 +704,8 @@ pop3_block(struct selector_key *key)
 
 static void pop3_close(struct selector_key *key)
 {
-    if(!ATTACHMENT(key)->client.mail.done){
+    if (!ATTACHMENT(key)->client.mail.done)
+    {
         pop3_destroy(ATTACHMENT(key));
     }
 }
@@ -639,7 +716,7 @@ pop3_done(struct selector_key *key)
     const int fds[] = {
         ATTACHMENT(key)->client_fd,
     };
-    if(ATTACHMENT(key)->selected_mail_fd != 0)
+    if (ATTACHMENT(key)->selected_mail_fd != 0)
         selector_unregister_fd(key->s, ATTACHMENT(key)->selected_mail_fd);
     for (unsigned i = 0; i < N(fds); i++)
     {
