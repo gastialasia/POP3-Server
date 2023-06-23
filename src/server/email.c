@@ -109,7 +109,7 @@ void load_mails(struct pop3 * p3) {
                 if (p3->mails==NULL||p3->dele_flags==NULL){
                     printf("ERROR: Not enough memory to load user mails\n");
                 }
-                for(unsigned int j=i; j<i+BLOCK; j++){
+                for(unsigned int j=i+1; j<i+BLOCK; j++){
                     p3->dele_flags[j]=0; //Seteo los flags recien creados en 0
                 }
             }
