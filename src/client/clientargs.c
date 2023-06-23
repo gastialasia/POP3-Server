@@ -124,7 +124,7 @@ static void
 usage(const char *progname)
 {
     fprintf(stderr,
-            "Usage: %s [OPTIONS]... TOKEN [DESTINATION] [PORT]\n"
+            "Usage: %s [OPTIONS] TOKEN\n"
             "Options:\n"
             "-h                  imprime los comandos del programa y termina.\n"
             "-c                  imprime la cantidad de conexiones concurrentes del server.\n"

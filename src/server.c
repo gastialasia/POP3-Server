@@ -30,6 +30,8 @@
 #include "include/selector.h"
 #include "include/pop3nio.h"
 #include "include/monitornio.h"
+#include "include/args.h"
+#include "include/email.h"
 
 #define MAX_SOCKS 500
 static const int FD_UNUSED = -1;
@@ -49,34 +51,14 @@ sigterm_handler(const int signal)
 static int bind_ipv4_socket(int bind_address, unsigned port);
 static int bind_ipv6_socket(struct in6_addr bind_address, unsigned port);
 
-int main(const int argc, const char **argv)
+int main(const int argc, char **argv)
 {
-    unsigned port = 1080;
 
-    if (argc == 1)
-    {
-        // utilizamos el default
-    }
-    else if (argc == 2)
-    {
-        char *end = 0;
-        const long sl = strtol(argv[1], &end, 10);
+    struct pop3args args;
+    parse_args(argc, argv, &args);
+    printf("%s\n",args.path);
+    change_maildir(args.path);
 
-        if (end == argv[1] || '\0' != *end || ((LONG_MIN == sl || LONG_MAX == sl) && ERANGE == errno) || sl < 0 || sl > USHRT_MAX)
-        {
-            fprintf(stderr, "Port should be an integer: %s\n", argv[1]);
-            return 1;
-        }
-        port = sl;
-    }
-    else
-    {
-        fprintf(stderr, "Usage: %s <port>\n", argv[0]);
-        return 1;
-    }
-
-    // no tenemos nada que leer de stdin
-    close(0);
 
     const char *err_msg = NULL;
     selector_status ss = SELECTOR_SUCCESS;
@@ -87,13 +69,13 @@ int main(const int argc, const char **argv)
     struct in6_addr server_ipv6_addr = in6addr_any, monitor_ipv6_addr = in6addr_any;
     int server_v6 = FD_UNUSED, monitor_v6 = FD_UNUSED;
 
-    server_v4 = bind_ipv4_socket(INADDR_ANY, port);
+    server_v4 = bind_ipv4_socket(INADDR_ANY, args.port);
     if (server_v4 < 0)
     {
         err_msg = "unable to create IPv4 server socket";
         goto finally;
     }
-    fprintf(stdout, "Server: listening on IPv4 TCP port %d\n", port);
+    fprintf(stdout, "Server: listening on IPv4 TCP port %d\n", args.port);
 
     monitor_v4 = bind_ipv4_socket(INADDR_ANY, 1081);
     if (monitor_v4 < 0)
@@ -103,13 +85,13 @@ int main(const int argc, const char **argv)
     }
     fprintf(stdout, "Monitor: listening on IPv4 TCP port %d\n", 1081);
 
-    server_v6 = bind_ipv6_socket(server_ipv6_addr, port);
+    server_v6 = bind_ipv6_socket(server_ipv6_addr, args.port);
     if (server_v6 < 0)
     {
         err_msg = "unable to create IPv6 socket";
         goto finally;
     }
-    fprintf(stdout, "Server: listening on IPv6 TCP port %d\n", 1080);
+    fprintf(stdout, "Server: listening on IPv6 TCP port %d\n", args.port);
 
     monitor_v6 = bind_ipv6_socket(monitor_ipv6_addr, 1081);
     if (monitor_v6 < 0)
