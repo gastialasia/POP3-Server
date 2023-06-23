@@ -22,6 +22,8 @@
 #define TEST_USER "foo"
 #define TEST_PASS "bar"
 
+extern struct client_t * clients;
+
 typedef struct{
     char command_id[COMMAND_LEN];
     fn_type command_handler;
@@ -237,14 +239,16 @@ unsigned int pass_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
         if(p3->credentials->user==NULL){
             return write_to_buffer(PASS_NOUSER_MSG, b);
         }
-        if (validate_credentials(p3, arg1)){
+        // arg1 es la pass
+        if(validate_user(clients, p3->credentials->user, arg1)){
+            //Si esta registrado, guardo la pass en credentials y voy a transaction
             int len = strlen(arg1);
             p3->credentials->pass = malloc(len*sizeof(char)+1);
             strncpy(p3->credentials->pass, arg1, len+1);
             //load_user_data(pop3);
             write_to_buffer(LOGIN_MSG, b);
             return TRANSACTION;
-        } 
+        }
         
     }
     write_to_buffer(AUTH_ERROR_MSG, b);

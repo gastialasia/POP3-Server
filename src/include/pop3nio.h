@@ -10,6 +10,12 @@
 #define MAX_USERS 5
 #define BUFFER_SIZE 1024*1024
 
+struct client_t {
+    char * user;
+    char * pass;
+    struct client_t * next;
+};
+
 /** maquina de estados general */
 enum pop3state
 {
@@ -93,7 +99,11 @@ uint32_t get_current();
 
 size_t get_transfer_bytes();
 
+int register_user(struct client_t * c, char * user, char * pass);
 
+struct client_t * unregister_user(struct client_t * c, char * user);
+
+int validate_user(struct client_t * c, char * user, char * pass);
 
 int change_buf_size(char * new_size);
 #endif 

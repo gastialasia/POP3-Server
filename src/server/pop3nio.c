@@ -35,6 +35,10 @@ static size_t transfer_bytes = 0; //aumentar despues de un send
 static struct pop3 *head_connection = NULL;
 //path a la carpeta donde estan los directorios de todos los usuarios
 
+struct client_t c = { .user="foo", .pass="bar", .next=NULL };
+
+struct client_t * clients = &c;
+
 /*
  * Si bien cada estado tiene su propio struct que le da un alcance
  * acotado, disponemos de la siguiente estructura para hacer una única
@@ -79,6 +83,51 @@ size_t get_transfer_bytes(){
 }
 int change_buf_size(char * new_buf){
   return 0;
+}
+
+int register_user(struct client_t * c, char * user, char * pass){
+    if(c==NULL){
+        //Registro el usuario al final de la lista
+        struct client_t * new = malloc(sizeof(struct client_t));
+        if (new==NULL){
+            printf("Error registering user\n");
+            return 1;
+        }
+        new->user = user; //Deberia hacer strcpy pero me tira warning
+        new->pass = pass;
+        new->next = NULL;
+        c->next = new;
+        return 0; //Retorno cero si agrego
+    }
+    return register_user(c->next, user, pass);
+}
+
+struct client_t * unregister_user(struct client_t * c, char * user){
+    if(c==NULL || user == NULL){
+        return c;
+    }
+    if (strcmp(c->user, user)==0){
+        struct client_t * next = c->next; //Me guardo el siguiente
+        free(c); //Borro el nodo actual
+        return next; //Devuelvo el siguiente
+    }
+    c->next = unregister_user(c->next, user);
+    return c;
+}
+
+//Devuelve 1 si el usuario esta registrado, 0 sino
+int validate_user(struct client_t * c, char * user, char * pass){
+    //Lo hago iterativo
+    struct client_t * aux = c;
+    while(aux!=NULL){
+        if(strcmp(aux->user, user)==0 && strcmp(aux->pass, pass)==0){
+            //El usuario esta registrado
+            return 1;
+        }
+        aux = aux->next;
+    }
+    //El usuario no esta registrado
+    return 0;
 }
 
 static void pop3_destroy(struct pop3 *s)
