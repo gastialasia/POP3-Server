@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <arpa/inet.h>
 #include "../include/monitor.h"
@@ -354,12 +355,13 @@ int monitor_response_handler(buffer *b,const enum response_code_status status, u
     buffer_write(b, response_len.byteType[1]);
 
     if (is_number) {
-        uint8_t numeric_response[6];
+        uint8_t numeric_response[4];
 
         uint32_t number = htonl(*((uint32_t*)data));
+        printf("%d\n",number);
         memcpy(numeric_response, &number, sizeof(uint32_t));
 
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 4; i++) {
             buffer_write(b, numeric_response[i]);
         }
     } else {

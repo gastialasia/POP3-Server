@@ -31,8 +31,6 @@ struct admin_connection{
   struct admin_connection *next;
 };
 // TODO:@pato descomentar esto cuando destruyamos cosas
-// static const unsigned           max_pool = 3;
-// static unsigned                 pool_size = 0;
 static struct admin_connection *pool = 0;
 size_t current_admins = 0;
 unsigned pool_size = 0;
@@ -119,7 +117,6 @@ static void monitor_init(struct admin_connection * admin_connection){
 
 void monitor_passive_accept(struct selector_key * key){
   struct admin_connection * admin = NULL;
-
   const int client_fd = accept(key->fd, NULL, NULL);
  
   if(client_fd == -1){
@@ -223,15 +220,15 @@ static void monitor_close(struct selector_key * key){
 
 #define MAX_ADMIN 3
 struct admin_info{
-  char   user[255];
-  char   token[16];
+  char   user[MAX_NAME];
+  char   token[TOKEN_SIZE+1];
 };
 
 struct admin_info all_admin_data[MAX_ADMIN];
 
 static bool check_monitor_admin(char * token){
   for (size_t i =0 ; i < current_admins; i++) {
-      if(strncmp(token, all_admin_data[i].token, 15) == 0){
+      if(strncmp(token, all_admin_data[i].token, TOKEN_SIZE) == 0){
         return true;
       }
   }
@@ -255,12 +252,12 @@ int add_new_admin(char * user, char * token){
     return 1;
   }
   //hacer un define del largo
-  if(strlen(token) != 15){
+  if(strlen(token) != TOKEN_SIZE){
     return -1; //token malo
   }
   //checkeo x si ya existe el username del admin
   for(size_t i =0; i < current_admins; i++){
-    if(strcmp(user, all_admin_data[i].user)){
+    if(!strcmp(user, all_admin_data[i].user)){
       return -1;
     }
   }
@@ -278,7 +275,7 @@ static void monitor_action(struct selector_key * key, struct monitor_st *d){
   bool is_number = false;
   int error_type = 0;
   //checkeo si el token es valido
-  if(check_monitor_admin(d->parser.monitor->token)){
+  if(!check_monitor_admin(d->parser.monitor->token)){
     d->status = monitor_status_invalid_auth;
     goto end;
   }
@@ -290,7 +287,7 @@ static void monitor_action(struct selector_key * key, struct monitor_st *d){
               uint32_t current_con = get_current();
               len = sizeof(current_con);
               data = malloc(len);
-              *data = current_con;
+              *((uint32_t *)data) = current_con;
               is_number = true;
               d->status = monitor_status_success;
               break;
@@ -299,7 +296,7 @@ static void monitor_action(struct selector_key * key, struct monitor_st *d){
               uint32_t historic_con = get_historic();
               len = sizeof(historic_con);
               data = malloc(len);
-              *data = historic_con;
+              *((uint32_t*)data) = historic_con;
               is_number = true;
               d->status = monitor_status_success;
               break;
@@ -308,7 +305,7 @@ static void monitor_action(struct selector_key * key, struct monitor_st *d){
               uint32_t tranfer_bytes = get_transfer_bytes();
               len = sizeof(tranfer_bytes);
               data = malloc(len);
-              *data = tranfer_bytes;
+              *((uint32_t *)data) = tranfer_bytes;
               is_number = true;
               d->status = monitor_status_success;
               break;

@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include "buffer.h"
 #define MAX_NAME 5
-#define TOKEN_SIZE 15
+#define TOKEN_SIZE 16
 #define MAX_PATH 255
 
 
