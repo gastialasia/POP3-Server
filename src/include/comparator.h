@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "../include/buffer.h"
 #include "../include/pop3nio.h"
+#include "../include/server_messages.h"
 
 typedef unsigned int(*fn_type)(buffer*, struct pop3*, char *arg1, char* arg2);
 
