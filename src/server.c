@@ -236,8 +236,8 @@ finally:
         selector_destroy(selector);
     }
     selector_close();
-
-        if (server_v4 >= 0)
+    admin_connection_pool_destroy();
+    if (server_v4 >= 0)
         close(server_v4);
     if(server_v6 >= 0)
         close(server_v6);

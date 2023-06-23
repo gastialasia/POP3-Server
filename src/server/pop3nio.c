@@ -66,11 +66,11 @@ static void remove_client(int client_fd) {
     head_connection = remove_client_rec(head_connection, client_fd);
 }
 
-unsigned get_current(){
+uint32_t get_current(){
   return connections;
 }
 //@TODO agregar sems
-unsigned get_historic(){
+uint32_t get_historic(){
   return historic_connections;
 }
 
@@ -116,10 +116,18 @@ static void pop3_read(struct selector_key *key);
 static void pop3_write(struct selector_key *key);
 static void pop3_block(struct selector_key *key);
 static void pop3_close(struct selector_key *key);
+
 static const struct fd_handler pop3_handler = {
     .handle_read = pop3_read,
     .handle_write = pop3_write,
     .handle_close = pop3_close,
+    .handle_block = pop3_block,
+};
+
+static const struct fd_handler mail_handler = {
+    .handle_read = pop3_read,
+    .handle_write = pop3_write,
+    .handle_close = NULL,
     .handle_block = pop3_block,
 };
 
@@ -152,7 +160,7 @@ reading_init(const unsigned state, struct selector_key *key)
     d->socket_fd = (ATTACHMENT(key)->client_fd);
     d->done = 0;
     d->byte_stuffing_st = 0;
-    selector_register(key->s, ATTACHMENT(key)->selected_mail_fd, &pop3_handler, OP_READ, ATTACHMENT(key));
+    selector_register(key->s, ATTACHMENT(key)->selected_mail_fd, &mail_handler, OP_READ, ATTACHMENT(key));
 }
 
 static unsigned client_read(struct selector_key *key)
@@ -266,6 +274,7 @@ static unsigned client_write(struct selector_key *key) { // key corresponde a un
     if (n == -1) {
         ret = ERROR;
     } else {
+        transfer_bytes += n; //agregamos a las statistics
         buffer_read_adv(d->wb, n);
         // si terminamos de mandar toda la response del HELLO, hacemos transicion HELLO_WRITE -> AUTH_READ o HELLO_WRITE -> REQUEST_READ
         if (!buffer_can_read(d->wb)) {
@@ -292,10 +301,10 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
     if (n == -1) {
         printf("%d\n",errno);
         if (errno==104){
-            selector_set_interest_key(key, OP_NOOP);
             ret = ERROR;
         }
     } else {
+        transfer_bytes += n; //agregamos a las statistics
         buffer_read_adv(d->wb, n);
         // si terminamos de mandar toda la response del HELLO, hacemos transicion HELLO_WRITE -> AUTH_READ o HELLO_WRITE -> REQUEST_READ
         if (!buffer_can_read(d->wb)) {
@@ -412,6 +421,7 @@ static struct pop3 *pop3_new(int client_fd)
         goto finally;
     
     connections++;
+    historic_connections++;
 
     if (head_connection == NULL)
     {
@@ -525,10 +535,7 @@ pop3_block(struct selector_key *key)
 static void pop3_close(struct selector_key *key)
 {
     if(!ATTACHMENT(key)->client.mail.done){
-        if (!ATTACHMENT(key)->selected_mail_fd){
-            pop3_destroy(ATTACHMENT(key));
-        }
-        
+        pop3_destroy(ATTACHMENT(key));
     }
 }
 
@@ -539,6 +546,7 @@ pop3_done(struct selector_key *key)
     const int fds[] = {
         ATTACHMENT(key)->client_fd,
     };
+    selector_unregister_fd(key->s, ATTACHMENT(key)->selected_mail_fd);
     for (unsigned i = 0; i < N(fds); i++)
     {
         if (fds[i] != -1)

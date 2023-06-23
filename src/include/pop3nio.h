@@ -87,9 +87,9 @@ void pop3_passive_accept(struct selector_key *key);
 
 void pop3_pool_destroy(void);
 
-unsigned get_historic();
+uint32_t get_historic();
 
-unsigned get_current();
+uint32_t get_current();
 
 size_t get_transfer_bytes();
 
