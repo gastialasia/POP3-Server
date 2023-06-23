@@ -99,6 +99,10 @@ uint32_t get_current();
 
 size_t get_transfer_bytes();
 
+struct client_t * unregister_clients_rec(struct client_t *c);
+
+void unregister_clients(struct client_t *c);
+
 int register_user(struct client_t * c, char * user, char * pass);
 
 int unregister_user(struct client_t * c, char * user);

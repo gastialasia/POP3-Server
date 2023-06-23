@@ -34,9 +34,13 @@
 static const int FD_UNUSED = -1;
 #define IS_FD_USED(fd) ((FD_UNUSED != fd))
 static bool done = false;
+//clientes
+struct client_t c = { .user="foo", .pass="bar", .next=NULL };
+struct client_t * clients = &c;
 
 static void
 sigterm_handler(const int signal) {
+    unregister_clients(clients);
     printf("signal %d, cleaning up and exiting\n",signal);
     done = true;
 }

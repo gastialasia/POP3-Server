@@ -34,10 +34,7 @@ static unsigned historic_connections = 0; //aumenta cada vez que se establece un
 static size_t transfer_bytes = 0; //aumentar despues de un send
 static struct pop3 *head_connection = NULL;
 //path a la carpeta donde estan los directorios de todos los usuarios
-
-struct client_t c = { .user="foo", .pass="bar", .next=NULL };
-
-struct client_t * clients = &c;
+extern struct client_t * clients;
 
 /*
  * Si bien cada estado tiene su propio struct que le da un alcance
@@ -49,6 +46,23 @@ struct client_t * clients = &c;
  */
 
 /** realmente destruye */
+
+
+void unregister_clients(struct client_t *c){
+    if(c == NULL){
+        return;
+    }
+    c = unregister_clients_rec(c);
+} 
+
+struct client_t * unregister_clients_rec(struct client_t *c){
+    while(c != NULL){
+        struct client_t * aux = c->next;
+        free(c);
+        c = aux;
+    }
+    return NULL;
+}
 
 static struct pop3* remove_client_rec(struct pop3* s, int client_fd) {
     if (s == NULL) {
