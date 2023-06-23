@@ -131,6 +131,15 @@ static const struct fd_handler mail_handler = {
     .handle_block = pop3_block,
 };
 
+static void welcome_on_connection(buffer *b){
+    size_t count;
+    char welcome[]="+OK Server ready\n";
+    size_t len = strlen(welcome);
+    uint8_t* buf = buffer_write_ptr(b, &count);
+    memcpy(buf, welcome, len);
+    buffer_write_adv(b, len);
+}
+
 static void
 auth_init(const unsigned state, struct selector_key *key)
 {
@@ -138,6 +147,8 @@ auth_init(const unsigned state, struct selector_key *key)
     d->rb = &(ATTACHMENT(key)->read_buffer);
     d->wb = &(ATTACHMENT(key)->write_buffer);
     d->parser = ATTACHMENT(key)->parser;
+    //Mensaje de bienvenida
+    welcome_on_connection(d->wb);
 }
 
 static void
@@ -483,7 +494,7 @@ void pop3_passive_accept(struct selector_key *key)
     memcpy(&state->client_addr, &client_addr, client_addr_len);
     state->client_addr_len = client_addr_len;
 
-    if (SELECTOR_SUCCESS != selector_register(key->s, client, &pop3_handler, OP_READ, state))
+    if (SELECTOR_SUCCESS != selector_register(key->s, client, &pop3_handler, OP_WRITE, state))
     {
         goto fail;
     }
