@@ -34,20 +34,6 @@ token_check(const char *src, char *dest_token, char *progname){
     return TOKEN_SIZE;
 }
 
-static enum ip_version
-ip_check(const char* src, struct sockaddr_in *sin4, struct sockaddr_in6 *sin6, char* progname){
-    if(inet_pton(AF_INET, src, &sin4->sin_addr) > 0){
-        sin4->sin_family = AF_INET;
-        return ipv4;
-    } else if(inet_pton(AF_INET6, src, &sin6->sin6_addr.s6_addr) > 0) {
-        sin6->sin6_family = AF_INET6;
-        return ipv6;
-    } else {
-        fprintf(stderr, "%s: invalid ip %s sent.\n", progname, src);
-        exit(1);
-    }
-}
-
 static void
 port_check(const char* src, struct sockaddr_in *sin4, struct sockaddr_in6 *sin6, enum ip_version *ip_version, char* progname){
     if(*ip_version != ipv4 && *ip_version != ipv6){
@@ -199,6 +185,7 @@ size_t parse_args(const int argc, char **argv, struct client_request_args *args,
                 args[req_idx].method = config;
                 args[req_idx].target.config_type = config_maildir;
                 args[req_idx].dlen = string_check(optarg, args[req_idx].data.path, "path", MAX_LEN, argv[0]);
+                break;
             case 'u':
                 // Adds pop3 user
                 args[req_idx].method = config;
@@ -217,7 +204,6 @@ size_t parse_args(const int argc, char **argv, struct client_request_args *args,
         }
     if(optind == argc){
         fprintf(stderr, "%s: missing token for client request.\n", argv[0]);
-        *ip_version = ip_check(argv[optind], sin4,sin6,argv[0]);
         exit(1);
     }
 
@@ -230,7 +216,6 @@ size_t parse_args(const int argc, char **argv, struct client_request_args *args,
                 token_check(argv[optind], token, argv[0]);
                 break;
             case 1:
- //               *ip_version = ip_check(argv[optind], sin4, sin6, argv[0]);
                 break;
             case 2:
                 port_check(argv[optind], sin4, sin6, ip_version, argv[0]);
