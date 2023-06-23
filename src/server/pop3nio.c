@@ -101,8 +101,6 @@ int change_buf_size(char * new_buf){
   return 0;
 }
 
-
-
 static struct client_t * register_user_rec(struct client_t * c, char * user, char * pass, int * flag){
     if(c == NULL){
       struct client_t * new = malloc(sizeof(struct client_t));
@@ -113,18 +111,15 @@ static struct client_t * register_user_rec(struct client_t * c, char * user, cha
       new->next = NULL;
       *flag = 0;
       c = new;
-      return new;
+      return c;
     }
     if(strcmp(c->user, user) == 0){
       *flag = 1;
       return c;
     }
-    return register_user_rec(c->next, user, pass,flag);
+    c->next = register_user_rec(c->next, user, pass, flag);
+    return c;
 }
-
-
-
-
 
 int register_user(struct client_t * c, char * user, char * pass){
   if(user == NULL || pass == NULL){
@@ -134,10 +129,6 @@ int register_user(struct client_t * c, char * user, char * pass){
   clients = register_user_rec(clients,user,pass,&error);
   return error;
 }
-
-
-
-
 
 struct client_t * unregister_user_rec(struct client_t * c, char * user, int * error){
     if(c==NULL || user == NULL){

@@ -40,7 +40,6 @@ struct client_t * clients = NULL;
 
 static void
 sigterm_handler(const int signal) {
-    unregister_clients(clients);
     printf("signal %d, cleaning up and exiting\n",signal);
     done = true;
 }
@@ -241,6 +240,7 @@ finally:
     }
     selector_close();
     admin_connection_pool_destroy();
+    unregister_clients(clients);
     if (server_v4 >= 0)
         close(server_v4);
     if(server_v6 >= 0)
