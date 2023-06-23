@@ -290,7 +290,10 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
     // esto deberia llamarse cuando el select lo despierta y sabe que se puede escribir al menos 1 byte, por eso no checkeamos el EWOULDBLOCK
     n = send(d->socket_fd, ptr, count, MSG_NOSIGNAL);
     if (n == -1) {
-        ret = ERROR;
+        printf("%d\n",errno);
+        if (errno==104){
+            ret = ERROR;
+        }
     } else {
         buffer_read_adv(d->wb, n);
         // si terminamos de mandar toda la response del HELLO, hacemos transicion HELLO_WRITE -> AUTH_READ o HELLO_WRITE -> REQUEST_READ
@@ -298,6 +301,7 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
             if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_READ)) {
                 ret = READING_MAIL;
             } else {
+                printf("BUFFER CAN READ ERROR\n");
                 ret = ERROR;
             }
         }
@@ -315,10 +319,11 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
 }
 
 
+/*
 static void empty_function(const unsigned state, struct selector_key *key){
     printf("empty function bb\n");
     return ;
-}
+}*/
 
 static void delete_mails(const unsigned state, struct selector_key *key){
     struct pop3 * p3 = ATTACHMENT(key);
@@ -335,14 +340,14 @@ static unsigned go_to_done(struct selector_key *key){
     return DONE;
 }
 
-
+/*
 static unsigned empty_function2(struct selector_key *key){
-    //printf("empty function 2 (estado %u)\n", ATTACHMENT(key)->stm.current->state);
+    printf("empty function 2 (estado %u)\n", ATTACHMENT(key)->stm.current->state);
     return ATTACHMENT(key)->stm.current->state;
-}
+}*/
 
 static void error_function(const unsigned state, struct selector_key *key){
-    printf("Estas en el estado de error capo\n");
+    printf("Estado de error\n");
     return ;
 }
 
@@ -363,42 +368,33 @@ static const struct state_definition client_statbl[] = {
     {
         .state = TRANSACTION,
         .on_arrival = trans_init,
-        .on_departure = empty_function,
         .on_read_ready = client_read,
         .on_write_ready = client_write,
     },
     {
         .state = READING_MAIL,
         .on_arrival = reading_init,
-        .on_departure = empty_function,
         .on_read_ready = filesystem_read,
         .on_write_ready = mail_write,
     },
     {
         .state = WRITING_MAIL,
-        .on_arrival = empty_function,
-        .on_departure = empty_function,
         .on_read_ready = filesystem_read,
         .on_write_ready = mail_write,
     },
     {
         .state = UPDATE,
         .on_arrival = delete_mails,
-        .on_departure = empty_function,
         .on_read_ready = go_to_done,
         .on_write_ready = client_write,
     },
     {
         .state = DONE,
         .on_arrival = close_connection,
-        .on_departure = empty_function,
-        .on_read_ready = empty_function2,
     },
     {
         .state = ERROR,
         .on_arrival = error_function,
-        .on_departure = empty_function,
-        .on_read_ready = empty_function2,
     },
 };
 
