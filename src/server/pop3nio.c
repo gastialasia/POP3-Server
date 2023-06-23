@@ -88,15 +88,15 @@ static void remove_client(int client_fd) {
     head_connection = remove_client_rec(head_connection, client_fd);
 }
 
-uint32_t get_current(){
+uint32_t get_current(void){
   return connections;
 }
 //@TODO agregar sems
-uint32_t get_historic(){
+uint32_t get_historic(void){
   return historic_connections;
 }
 
-size_t get_transfer_bytes(){
+size_t get_transfer_bytes(void){
   return transfer_bytes;
 }
 int change_buf_size(char * new_buf){
