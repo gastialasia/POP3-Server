@@ -12,6 +12,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+extern struct client_t * clients;
+
 
 struct monitor_st {
   buffer                *rb,*wb;
@@ -338,12 +340,12 @@ static void monitor_action(struct selector_key * key, struct monitor_st *d){
               break;
           }
           case monitor_config_add_pop3: {
-            // error_type = add_new_pop3(d->parser.monitor->data.pop3_to_add.user,d->parser.monitor->data.pop3_to_add.pass);
-             d->status = monitor_status_success;
+              error_type = register_user(clients, d->parser.monitor->data.pop3_to_add.user,d->parser.monitor->data.pop3_to_add.pass);
+              d->status = monitor_status_success;
               break;
           }
           case monitor_config_remove_pop3: {
-            //  error_type = remove_pop3(d->parser.monitor->data.user_to_del);
+              error_type = unregister_user(clients, d->parser.monitor->data.user_to_del);
               d->status = monitor_status_success;
               break;
           }

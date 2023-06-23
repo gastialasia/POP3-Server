@@ -102,18 +102,29 @@ int register_user(struct client_t * c, char * user, char * pass){
     return register_user(c->next, user, pass);
 }
 
-struct client_t * unregister_user(struct client_t * c, char * user){
+struct client_t * unregister_user_rec(struct client_t * c, char * user, int * error){
     if(c==NULL || user == NULL){
         return c;
     }
     if (strcmp(c->user, user)==0){
         struct client_t * next = c->next; //Me guardo el siguiente
         free(c); //Borro el nodo actual
+        *error = 0;
         return next; //Devuelvo el siguiente
     }
-    c->next = unregister_user(c->next, user);
+    c->next = unregister_user_rec(c->next, user, error);
     return c;
 }
+
+int unregister_user(struct client_t * c, char * user){
+    if(c==NULL || user==NULL){
+        return 1;
+    }
+    int error = 1; //1 es error por default
+    c = unregister_user_rec(c, user, &error);
+    return error;
+}
+
 
 //Devuelve 1 si el usuario esta registrado, 0 sino
 int validate_user(struct client_t * c, char * user, char * pass){

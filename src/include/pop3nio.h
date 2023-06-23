@@ -101,7 +101,7 @@ size_t get_transfer_bytes();
 
 int register_user(struct client_t * c, char * user, char * pass);
 
-struct client_t * unregister_user(struct client_t * c, char * user);
+int unregister_user(struct client_t * c, char * user);
 
 int validate_user(struct client_t * c, char * user, char * pass);
 
