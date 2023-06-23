@@ -41,6 +41,9 @@ DIR *open_maildir(struct pop3 *p3, char *path)
     strncat(full_path, p3->credentials->user, user_len);
     strcat(full_path, CUR);
     DIR *ret = opendir(full_path);
+    if (ret==NULL){
+        printf("Error: the maildir could not be opened\n");
+    }
     free(full_path);
     return ret; // En el handler tenemos que chequear si es null para pasar la stm a ERROR
 }

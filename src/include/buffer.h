@@ -138,4 +138,6 @@ bool buffer_can_read(buffer *b);
 /** retorna true si se pueden escribir bytes en el buffer */
 bool buffer_can_write(buffer *b);
 
+void delete_n_from_buffer(buffer * b, int n);
+
 #endif

@@ -417,14 +417,14 @@ static unsigned filesystem_read(struct selector_key *key)
                 buffer_write(d->wb, c);
                 if (byte_stuffer(c, &d->byte_stuffing_st))
                 {
+                    //Borrar 2 chars del buffer
+                    delete_n_from_buffer(d->wb, 5);
                     buffer_write(d->wb, CR);
                     buffer_write(d->wb, LF);
                     buffer_write(d->wb, '.');
                     buffer_write(d->wb, CR);
                     buffer_write(d->wb, LF);
                     d->done = true;
-                    // buffer_reset(d->rb); //Vacio el read buffer
-                    // curr_state = WRITING_MAIL;
                     break;
                 }
             }

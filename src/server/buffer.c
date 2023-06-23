@@ -121,3 +121,7 @@ void buffer_compact(buffer *b)
         b->write = b->data + n;
     }
 }
+
+void delete_n_from_buffer(buffer * b, int n){
+    b->write-= n;
+}
