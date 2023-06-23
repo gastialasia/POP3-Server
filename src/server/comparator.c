@@ -248,7 +248,7 @@ unsigned int pass_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2) {
             //load_user_data(pop3);
             write_to_buffer(LOGIN_MSG, b);
             //Log para el administrador
-            printf("user %s logged in\n", p3->credentials->user);
+            printf("User %s logged in\n", p3->credentials->user);
             return TRANSACTION;
         }
         

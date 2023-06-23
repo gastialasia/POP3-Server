@@ -417,7 +417,6 @@ int monitor_response_handler(buffer *b,const enum response_code_status status, u
         uint8_t numeric_response[4];
 
         uint32_t number = htonl(*((uint32_t*)data));
-        printf("%d\n",number);
         memcpy(numeric_response, &number, sizeof(uint32_t));
 
         for (int i = 0; i < 4; i++) {

@@ -9,6 +9,7 @@
 
 #define CUR "/cur/"
 #define INITIAL_PATH "./directories/"
+#define MAX_MAILS 30
 
 #define BLOCK 20
 
@@ -79,7 +80,7 @@ void load_mails(struct pop3 * p3) {
     p3->max_index = 0;
     p3->total_octates = 0;
     unsigned int i=0;
-    while(d != NULL){
+    while(d != NULL && i<MAX_MAILS){
         if (strcmp(d->d_name,".") && strcmp(d->d_name,"..")){
 
             struct mail_t * new = malloc(sizeof(struct mail_t)); //Creamos mail
@@ -105,13 +106,13 @@ void load_mails(struct pop3 * p3) {
             //Cargo mail en el array. Si hace falta, lo agrando
             if (i%BLOCK==0){
                 p3->mails = realloc(p3->mails, (BLOCK+i)*sizeof(struct mail_t*)); //realloco espacio para mails
-                p3->dele_flags = realloc(p3->dele_flags, (BLOCK+i)*sizeof(u_int8_t)); //realloco espacio para flags
+                //p3->dele_flags = realloc(p3->dele_flags, (BLOCK+i)*sizeof(u_int8_t)); //realloco espacio para flags
                 if (p3->mails==NULL||p3->dele_flags==NULL){
-                    printf("ERROR: Not enough memory to load user mails\n");
+                    printf("error: Not enough memory to load user mails\n");
                 }
-                for(unsigned int j=i+1; j<i+BLOCK; j++){
+                /*for(unsigned int j=i+1; j<i+BLOCK; j++){
                     p3->dele_flags[j]=0; //Seteo los flags recien creados en 0
-                }
+                }*/
             }
             
             p3->mails[i] = new; //Guardo mail en el array de mails

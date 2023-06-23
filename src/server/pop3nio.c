@@ -28,6 +28,8 @@
 #define CR '\r'
 #define LF '\n'
 
+#define MAX_MAILS 30
+
 // Variable globales
 static unsigned int connections = 0; // live qty of connections
 static unsigned historic_connections = 0; //aumenta cada vez que se establece una conexion
@@ -174,7 +176,7 @@ int validate_user(struct client_t * c, char * user, char * pass){
 static void pop3_destroy(struct pop3 *s)
 {
     if(s->credentials->pass!=NULL){
-        printf("user %s has logged out\n", s->credentials->user);
+        printf("User %s has logged out\n", s->credentials->user);
         free(s->credentials->user);
         free(s->credentials->pass);
     } else if (s->credentials->user!=NULL){
@@ -400,7 +402,6 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
     // esto deberia llamarse cuando el select lo despierta y sabe que se puede escribir al menos 1 byte, por eso no checkeamos el EWOULDBLOCK
     n = send(d->socket_fd, ptr, count, MSG_NOSIGNAL);
     if (n == -1) {
-        printf("%d\n",errno);
         if (errno==104){
             ret = ERROR;
         }
@@ -450,11 +451,6 @@ static unsigned go_to_done(struct selector_key *key){
     return DONE;
 }
 
-/*
-static unsigned empty_function2(struct selector_key *key){
-    printf("empty function 2 (estado %u)\n", ATTACHMENT(key)->stm.current->state);
-    return ATTACHMENT(key)->stm.current->state;
-}*/
 
 static void error_function(const unsigned state, struct selector_key *key){
     //printf("Error state\n");
@@ -462,7 +458,6 @@ static void error_function(const unsigned state, struct selector_key *key){
 }
 
 static void close_connection(const unsigned state, struct selector_key *key){
-    //pop3_destroy(ATTACHMENT(key));
     return ;
 }
 
@@ -547,7 +542,7 @@ static struct pop3 *pop3_new(int client_fd)
     ret->credentials = calloc(1, sizeof(struct credentials_t));
     ret->parser = create_parser();
     ret->mails = NULL;
-    ret->dele_flags = calloc(20,sizeof(uint8_t));;
+    ret->dele_flags = calloc(MAX_MAILS,sizeof(uint8_t));
     stm_init(&ret->stm);
 
     buffer_init(&ret->read_buffer, N(ret->raw_buff_a), ret->raw_buff_a);
@@ -613,7 +608,6 @@ pop3_write(struct selector_key *key)
 {
     struct state_machine *stm = &ATTACHMENT(key)->stm;
     const enum pop3state st = stm_handler_write(stm, key);
-    //printf("ENTRE AL WRITEEEEEEE\n");
     if (ERROR == st || DONE == st)
     {
         pop3_done(key);

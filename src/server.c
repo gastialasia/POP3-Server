@@ -40,7 +40,7 @@ struct client_t * clients = NULL;
 
 static void
 sigterm_handler(const int signal) {
-    printf("signal %d, cleaning up and exiting\n",signal);
+    printf("Signal %d, cleaning up and exiting\n",signal);
     done = true;
 }
 
@@ -60,7 +60,7 @@ main(const int argc, const char **argv) {
         if (end == argv[1]|| '\0' != *end 
            || ((LONG_MIN == sl || LONG_MAX == sl) && ERANGE == errno)
            || sl < 0 || sl > USHRT_MAX) {
-            fprintf(stderr, "port should be an integer: %s\n", argv[1]);
+            fprintf(stderr, "Port should be an integer: %s\n", argv[1]);
             return 1;
         }
         port = sl;
@@ -115,7 +115,7 @@ main(const int argc, const char **argv) {
     signal(SIGTERM, sigterm_handler);
     signal(SIGINT,  sigterm_handler);
         if(IS_FD_USED(server_v4) && (selector_fd_set_nio(server_v4) == -1)){
-        err_msg = "getting pop3 server ipv4 socket flags";
+        err_msg = "Getting pop3 server ipv4 socket flags";
         goto finally;
     }
 
