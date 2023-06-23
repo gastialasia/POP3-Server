@@ -173,8 +173,8 @@ int validate_user(struct client_t * c, char * user, char * pass){
 
 static void pop3_destroy(struct pop3 *s)
 {
-    printf("Freeing client resources\n");
     if(s->credentials->pass!=NULL){
+        printf("user %s has logged out\n", s->credentials->user);
         free(s->credentials->user);
         free(s->credentials->pass);
     } else if (s->credentials->user!=NULL){
@@ -187,6 +187,7 @@ static void pop3_destroy(struct pop3 *s)
     free(s->dele_flags); //Agregue el free para los flags
     free(s->credentials);
     parser_destroy(s->parser);
+    printf("A client has closed it's connection from fd: %d\n", s->client_fd);
     remove_client(s->client_fd);
     connections--;
 }
@@ -456,7 +457,7 @@ static unsigned empty_function2(struct selector_key *key){
 }*/
 
 static void error_function(const unsigned state, struct selector_key *key){
-    printf("Error state\n");
+    //printf("Error state\n");
     return ;
 }
 
@@ -537,6 +538,7 @@ static struct pop3 *pop3_new(int client_fd)
     }
 
     ret->client_fd = client_fd;
+    printf("A user has been connected with fd: %d\n", client_fd);
     ret->client_addr_len = sizeof(ret->client_addr);
 
     ret->stm.initial = AUTH;
