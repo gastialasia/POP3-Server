@@ -643,7 +643,8 @@ pop3_done(struct selector_key *key)
     const int fds[] = {
         ATTACHMENT(key)->client_fd,
     };
-    selector_unregister_fd(key->s, ATTACHMENT(key)->selected_mail_fd);
+    if(ATTACHMENT(key)->selected_mail_fd != 0)
+        selector_unregister_fd(key->s, ATTACHMENT(key)->selected_mail_fd);
     for (unsigned i = 0; i < N(fds); i++)
     {
         if (fds[i] != -1)
