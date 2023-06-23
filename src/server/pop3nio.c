@@ -257,7 +257,7 @@ static const struct fd_handler mail_handler = {
 static void welcome_on_connection(buffer *b)
 {
     size_t count;
-    char welcome[] = "+OK Server ready\n";
+    char welcome[] = "+OK Server ready\r\n";
     size_t len = strlen(welcome);
     uint8_t *buf = buffer_write_ptr(b, &count);
     memcpy(buf, welcome, len);
@@ -405,7 +405,11 @@ static unsigned filesystem_read(struct selector_key *key)
                 buffer_write(d->wb, c);
                 if (byte_stuffer(c, &d->byte_stuffing_st))
                 {
-                    buffer_write(d->wb, '\n');
+                    buffer_write(d->wb, CR);
+                    buffer_write(d->wb, LF);
+                    buffer_write(d->wb, '.');
+                    buffer_write(d->wb, CR);
+                    buffer_write(d->wb, LF);
                     d->done = true;
                     // buffer_reset(d->rb); //Vacio el read buffer
                     // curr_state = WRITING_MAIL;

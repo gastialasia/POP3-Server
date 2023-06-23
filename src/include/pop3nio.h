@@ -8,7 +8,7 @@
 #include "parser.h"
 
 #define MAX_USERS 5
-#define BUFFER_SIZE 1024 * 1024
+#define BUFFER_SIZE 1024*1024*4
 
 struct client_t
 {

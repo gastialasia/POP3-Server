@@ -138,30 +138,36 @@ void store_command(struct parser_event *event, const uint8_t c)
 {
     if (event->commands[0] == NULL)
     {
-        event->commands[0] = malloc(10 * sizeof(char)); // 4 bytes para command, y el null terminated
+        event->commands[0] = malloc(5 * sizeof(char)); // 4 bytes para command, y el null terminated
     }
-    event->commands[0][event->index++] = c;
-    event->commands[0][event->index] = '\0';
+    if(event->index < 4){
+        event->commands[0][event->index++] = c;
+        event->commands[0][event->index] = '\0';
+    }
 }
 
 void store_first_arg(struct parser_event *event, const uint8_t c)
 {
     if (event->commands[1] == NULL)
     {
-        event->commands[1] = malloc(40 * sizeof(char)); // 40 para cada argumnento y null terminates
+        event->commands[1] = malloc(41 * sizeof(char)); // 40 para cada argumnento y null terminates
     }
-    event->commands[1][(event->index)++] = c;
-    event->commands[1][(event->index)] = '\0';
+    if(event->index < 40){
+        event->commands[1][(event->index)++] = c;
+        event->commands[1][(event->index)] = '\0';
+    }
 }
 
 void store_second_arg(struct parser_event *event, const uint8_t c)
 {
     if (event->commands[2] == NULL)
     {
-        event->commands[2] = malloc(40 * sizeof(char)); // 40 para cada argumnento y null terminates
+        event->commands[2] = malloc(41 * sizeof(char)); // 40 para cada argumnento y null terminates
     }
-    event->commands[2][(event->index)++] = c;
-    event->commands[2][(event->index)] = '\0';
+    if(event->index < 40){
+        event->commands[2][(event->index)++] = c;
+        event->commands[2][(event->index)] = '\0';
+    }
 }
 
 void restart_tokenizer(struct parser_event *pe)
