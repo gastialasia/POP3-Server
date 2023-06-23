@@ -158,6 +158,7 @@ main(const int argc, const char **argv) {
         err_msg = "unable to create selector";
         goto finally;
     }
+
     const struct fd_handler pop3 = {
         .handle_read       = pop3_passive_accept,
         .handle_write      = NULL,

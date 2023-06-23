@@ -292,6 +292,7 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
     if (n == -1) {
         printf("%d\n",errno);
         if (errno==104){
+            selector_set_interest_key(key, OP_NOOP);
             ret = ERROR;
         }
     } else {
@@ -524,7 +525,10 @@ pop3_block(struct selector_key *key)
 static void pop3_close(struct selector_key *key)
 {
     if(!ATTACHMENT(key)->client.mail.done){
-        pop3_destroy(ATTACHMENT(key));
+        if (!ATTACHMENT(key)->selected_mail_fd){
+            pop3_destroy(ATTACHMENT(key));
+        }
+        
     }
 }
 
