@@ -47,7 +47,7 @@ hello_parser_feed(struct hello_parser *p, const uint8_t b) {
             // nada que hacer, nos quedamos en este estado
             break;
         default:
-            fprintf(stderr, "unknown state %d\n", p->state);
+            fprintf(stderr, "Unknown state %d\n", p->state);
             abort();
     }
 

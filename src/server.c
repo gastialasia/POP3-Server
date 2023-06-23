@@ -108,12 +108,12 @@ main(const int argc, const char **argv) {
         fprintf(stdout, "Monitor: listening on IPv6 TCP port %d\n", 1081);
 
         if(!IS_FD_USED(server_v4) && !IS_FD_USED(server_v6)) {
-        fprintf(stderr, "unable to parse socks server ip\n");
+        fprintf(stderr, "Unable to parse socks server IP\n");
         goto finally;
     }
 
     if(!IS_FD_USED(monitor_v4) && !IS_FD_USED(monitor_v6)) {
-        fprintf(stderr, "unable to parse monitor server ip\n");
+        fprintf(stderr, "Unable to parse monitor server IP\n");
         goto finally;
     }
 
@@ -137,7 +137,7 @@ main(const int argc, const char **argv) {
     }
 
     if(IS_FD_USED(monitor_v6) && (selector_fd_set_nio(monitor_v6) == -1)) {
-        err_msg = "getting monitor server ipv6 socket flags";
+        err_msg = "Getting monitor server ipv6 socket flags";
         goto finally;
     }
 
@@ -200,7 +200,7 @@ main(const int argc, const char **argv) {
         }
     }
 
-    add_new_admin("root", "123456789abcdef");
+    add_new_admin("root", "123456789abcdef1");
 
 
     /* ss = selector_register(selector, server, &pop3, OP_READ, NULL);*/
@@ -251,10 +251,9 @@ finally:
 static int
 create_socket(sa_family_t family) {
     const int s = socket(family, SOCK_STREAM, IPPROTO_TCP);
-    printf("El socket del server es :%d\n",s);
+    printf("Server socket is :%d\n",s);
     if (s < 0) {
-        printf("entre\n");
-        fprintf(stderr, "unable to create socket\n");
+        fprintf(stderr, "Unable to create socket\n");
         return -1;
     }
 
@@ -268,12 +267,12 @@ create_socket(sa_family_t family) {
 static int
 bind_socket(int server, struct sockaddr *address, socklen_t address_len) {
     if (bind(server, address, address_len) < 0) {
-        fprintf(stderr, "unable to bind socket\n");
+        fprintf(stderr, "Unable to bind socket\n");
         return -1;
     }
 
     if (listen(server, 20) < 0) {
-        fprintf(stderr, "unable to listen on socket\n");
+        fprintf(stderr, "Unable to listen on socket\n");
         return -1;
     }
 
@@ -284,7 +283,7 @@ static int
 bind_ipv4_socket(int bind_address, unsigned port) {
     const int server = create_socket(AF_INET);
 
-    printf("El fd del server es :%d\n",server);
+    printf("Socket file descriptor is %d\n",server);
 
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
@@ -293,17 +292,16 @@ bind_ipv4_socket(int bind_address, unsigned port) {
     addr.sin_port        = htons(port); // htons translates a short integer from host byte order to network byte order.
 
     if (bind_socket(server, (struct sockaddr*) &addr, sizeof(addr)) == -1){
-        printf("Fallo en el bind\n");
+        printf("Error in bind\n");
         return -1;
     }
-    printf("El fd del server es :%d\n",server);
+    printf("Server file descriptor is %d\n",server);
     return server;
 }
 
 
 static int
 bind_ipv6_socket(struct in6_addr bind_address, unsigned port) {
-    printf("estoy en IPV6\n");
     const int server = create_socket(AF_INET6);
     setsockopt(server, IPPROTO_IPV6, IPV6_V6ONLY, &(int){1}, sizeof(int)); // man ipv6, si falla fallara el bind
 

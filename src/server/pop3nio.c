@@ -83,7 +83,7 @@ int change_buf_size(char * new_buf){
 
 static void pop3_destroy(struct pop3 *s)
 {
-    printf("Estoy en pop3_destroy\n");
+    printf("Freeing client resources\n");
     if(s->credentials->pass!=NULL){
         free(s->credentials->user);
         free(s->credentials->pass);
@@ -222,7 +222,6 @@ static int byte_stuffer(char input, int* state){
     } else if (input == CR && *state == 3) {
         *state = 4;
     } else if (input == LF && *state == 4) {
-        printf("\nTERMINE\n");
         return 1;
     } else {
         *state = 0;
@@ -322,7 +321,6 @@ static unsigned mail_write(struct selector_key *key) { // key corresponde a un c
             if (SELECTOR_SUCCESS == selector_set_interest_key(key, OP_READ)) {
                 ret = READING_MAIL;
             } else {
-                printf("BUFFER CAN READ ERROR\n");
                 ret = ERROR;
             }
         }
@@ -368,7 +366,7 @@ static unsigned empty_function2(struct selector_key *key){
 }*/
 
 static void error_function(const unsigned state, struct selector_key *key){
-    printf("Estado de error\n");
+    printf("Error state\n");
     return ;
 }
 
@@ -512,7 +510,6 @@ pop3_read(struct selector_key *key)
 {
     struct state_machine *stm = &ATTACHMENT(key)->stm;
     const enum pop3state st = stm_handler_read(stm, key);
-    //printf("ENTRE AL READDDDDDD\n");
     if (ERROR == st || DONE == st)
     {
         pop3_done(key);
@@ -553,7 +550,6 @@ static void pop3_close(struct selector_key *key)
 static void
 pop3_done(struct selector_key *key)
 {
-    printf("Estoy en pop3_done\n");
     const int fds[] = {
         ATTACHMENT(key)->client_fd,
     };

@@ -44,7 +44,7 @@ DIR* open_maildir(struct pop3* p3, char* path){
 
 char* read_mail(DIR* directory, struct pop3* p3, char* path){
     if(directory == NULL)
-        printf("Error opening directory\n");
+        printf("Error opening inbox directory.\n");
     struct dirent* d = readdir(directory);
     while(d != NULL){
         d = readdir(directory);
@@ -59,7 +59,6 @@ char* read_mail(DIR* directory, struct pop3* p3, char* path){
     strncat(mail_path, p3->credentials->user, user_len);
     strcat(mail_path, CUR);
     strcat(mail_path, d->d_name);
-    printf("%s\n", mail_path);
 
     FILE* mail = fopen(mail_path, "r");
     char* buf = malloc(100*sizeof(char));

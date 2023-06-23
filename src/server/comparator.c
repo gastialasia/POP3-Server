@@ -84,7 +84,7 @@ unsigned int noop(buffer*b, struct pop3*p3, char *arg1, char* arg2){
 
 unsigned int retr_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
     load_mails(p3);
-    struct mail_t** aux = p3->mails;
+    //struct mail_t** aux = p3->mails;
     if(arg1 != NULL){
         unsigned int index = atoi(arg1);
         if (index==0){
@@ -100,16 +100,16 @@ unsigned int retr_handler(buffer*b, struct pop3*p3, char *arg1, char* arg2){
             return TRANSACTION;
         }
         p3->selected_mail = index-1;
-        printf("el path es: %s\n", aux[p3->selected_mail]->file_path);
+        //("el path es: %s\n", aux[p3->selected_mail]->file_path);
         write_to_buffer(POSITIVE_MSG, b);
         //Abro el archivo
         int fd = open(p3->mails[p3->selected_mail]->file_path, O_RDONLY);
         if(fd<0){
-            printf("error abriendo el file descriptor\n");
+            printf("Error opening email file.\n");
         return ERROR;
         }
         if(selector_fd_set_nio(fd)<0){
-            printf("Error seteando fd no blockeante\n");
+            printf("Error setting file fd non blocking.\n");
         }
         //Registro el fd en el selector
         p3->selected_mail_fd = fd; // ME GUARDO EL FD DEL ARCHIVO EN POP3
