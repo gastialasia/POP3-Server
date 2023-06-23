@@ -201,7 +201,14 @@ static void pop3_destroy(struct pop3 *s)
 {
     if (s->credentials->pass != NULL)
     {
-        printf("User %s has logged out\n", s->credentials->user);
+        time_t t;
+        time(&t);
+        char fmt[200];
+        sprintf(fmt, "%s", ctime(&t));
+        int len = strlen(fmt); 
+        fmt[len-1] = '\0';
+
+        printf("[%s] User %s has logged out\n", fmt, s->credentials->user);
         free(s->credentials->user);
         free(s->credentials->pass);
     }
@@ -219,7 +226,12 @@ static void pop3_destroy(struct pop3 *s)
     parser_destroy(s->parser);
     time_t t;
     time(&t);
-    printf("%sA user has been disconnected\n", ctime(&t));
+    char fmt[200];
+    sprintf(fmt, "%s", ctime(&t));
+    int len = strlen(fmt); 
+    fmt[len-1] = '\0';
+
+    printf("[%s] A client disconnected\n\n", fmt);
     remove_client(s->client_fd);
     connections--;
 }
@@ -645,7 +657,12 @@ void pop3_passive_accept(struct selector_key *key)
 
     time_t t;
     time(&t);
-    printf("%sA user has been connected\n", ctime(&t));
+    char fmt[200];
+    sprintf(fmt, "%s", ctime(&t));
+    int len = strlen(fmt); 
+    fmt[len-1] = '\0';
+
+    printf("[%s] A client has been connected\n", fmt);
 
     if (client == -1)
     {

@@ -6,7 +6,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-
+#include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -291,7 +291,14 @@ unsigned int pass_handler(buffer *b, struct pop3 *p3, char *arg1, char *arg2)
             // load_user_data(pop3);
             write_to_buffer(LOGIN_MSG, b);
             // Log para el administrador
-            printf("User %s logged in\n", p3->credentials->user);
+            time_t t;
+            time(&t);
+            char fmt[200];
+            sprintf(fmt, "%s", ctime(&t));
+            int len2 = strlen(fmt); 
+            fmt[len2-1] = '\0';
+
+            printf("[%s] User %s logged in\n", fmt, p3->credentials->user);
             return TRANSACTION;
         }
     }
