@@ -340,7 +340,9 @@ static void monitor_action(struct selector_key * key, struct monitor_st *d){
               break;
           }
           case monitor_config_add_pop3: {
+              printf("entre a cambiar los users\n");
               error_type = register_user(clients, d->parser.monitor->data.pop3_to_add.user,d->parser.monitor->data.pop3_to_add.pass);
+              printf("%d\n",error_type);
               d->status = monitor_status_success;
               break;
           }

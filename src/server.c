@@ -35,8 +35,8 @@ static const int FD_UNUSED = -1;
 #define IS_FD_USED(fd) ((FD_UNUSED != fd))
 static bool done = false;
 //clientes
-struct client_t c = { .user="foo", .pass="bar", .next=NULL };
-struct client_t * clients = &c;
+// struct client_t c { .user="foo", .pass="bar", .next=NULL };
+struct client_t * clients = NULL;
 
 static void
 sigterm_handler(const int signal) {
@@ -203,7 +203,7 @@ main(const int argc, const char **argv) {
             goto finally;
         }
     }
-
+    register_user(clients, "foo", "bar");
     add_new_admin("root", "123456789abcdef1");
 
 

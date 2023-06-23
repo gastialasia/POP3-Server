@@ -99,6 +99,8 @@ enum monitor_state parser_target(struct monitor_parser *p,uint8_t c){
         case monitor_config_buf_size:
         case monitor_config_add_admin:
         case monitor_config_remove_admin:
+        case monitor_config_add_pop3:
+        case monitor_config_remove_pop3:
           p->monitor->type.config_type = c;
           p->read = 0;
           p->len = 2; //bytes
@@ -146,6 +148,14 @@ enum monitor_state parse_dlen(struct monitor_parser * p , uint8_t c){
                 ret = monitor_data;
                 break;
             case monitor_config_remove_admin:
+                reset_len(p, p->monitor->dlen);
+                ret = monitor_data;
+                break;
+            case monitor_config_remove_pop3:
+                reset_len(p, p->monitor->dlen);
+                ret = monitor_data;
+                break;
+              case monitor_config_add_pop3:
                 reset_len(p, p->monitor->dlen);
                 ret = monitor_data;
                 break;

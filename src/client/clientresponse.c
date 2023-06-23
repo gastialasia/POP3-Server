@@ -94,7 +94,7 @@ void process_response (uint8_t c, struct client_request_args *args, uint8_t *buf
         if (c == monitor_resp_status_ok) {
             if (args->method == get)
                 handle_get_ok_status(*args, buf, combinedlen, numeric_data_array, numeric_response);
-          else
+            else
                 handle_config_ok_status(*args);
         } else {
             handle_error_response (args, c);

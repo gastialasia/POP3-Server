@@ -99,22 +99,43 @@ int change_buf_size(char * new_buf){
   return 0;
 }
 
-int register_user(struct client_t * c, char * user, char * pass){
-    if(c==NULL){
-        //Registro el usuario al final de la lista
-        struct client_t * new = malloc(sizeof(struct client_t));
-        if (new==NULL){
-            printf("Error registering user\n");
-            return 1;
-        }
-        new->user = user; //Deberia hacer strcpy pero me tira warning
-        new->pass = pass;
-        new->next = NULL;
-        c->next = new;
-        return 0; //Retorno cero si agrego
+
+
+static struct client_t * register_user_rec(struct client_t * c, char * user, char * pass, int * flag){
+    if(c == NULL){
+      struct client_t * new = malloc(sizeof(struct client_t));
+      new->user = malloc(sizeof(char)*(strlen(user) +1));
+      new->pass = malloc(sizeof(char)*(strlen(pass) +1));
+      strcpy(new->user, user);
+      strcpy(new->pass,pass);
+      new->next = NULL;
+      *flag = 0;
+      c = new;
+      return new;
     }
-    return register_user(c->next, user, pass);
+    if(strcmp(c->user, user) == 0){
+      *flag = 1;
+      return c;
+    }
+    return register_user_rec(c->next, user, pass,flag);
 }
+
+
+
+
+
+int register_user(struct client_t * c, char * user, char * pass){
+  if(user == NULL || pass == NULL){
+    return 1;
+  }
+  int error = 1;
+  clients = register_user_rec(clients,user,pass,&error);
+  return error;
+}
+
+
+
+
 
 struct client_t * unregister_user_rec(struct client_t * c, char * user, int * error){
     if(c==NULL || user == NULL){
