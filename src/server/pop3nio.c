@@ -58,6 +58,8 @@ void unregister_clients(struct client_t *c){
 struct client_t * unregister_clients_rec(struct client_t *c){
     while(c != NULL){
         struct client_t * aux = c->next;
+        free(c->user);
+        free(c->pass);
         free(c);
         c = aux;
     }
@@ -143,6 +145,8 @@ struct client_t * unregister_user_rec(struct client_t * c, char * user, int * er
     }
     if (strcmp(c->user, user)==0){
         struct client_t * next = c->next; //Me guardo el siguiente
+        free(c->pass);
+        free(c->user);
         free(c); //Borro el nodo actual
         *error = 0;
         return next; //Devuelvo el siguiente
