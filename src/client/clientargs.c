@@ -117,7 +117,7 @@ usage(const char *progname) {
         "-U <user:token>     agrega un usuario administrador con el nombre y token indicados.\n"
         "-d <user>           borra el usuario del servidor pop3 con el nombre indicado.\n"
         "-D <user>           borra el usuario administrador con el nombre indicado.\n"
-        "-m                  cambia el maildir del servidor al pedido.\n"
+        "-m <path>           cambia el maildir del servidor al pedido.\n"
         "-v                  imprime la versión del programa y termina.\n"
         "\n",
         progname);
