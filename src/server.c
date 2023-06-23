@@ -109,28 +109,18 @@ main(const int argc, const char **argv) {
             goto finally;
         }
         fprintf(stdout, "Monitor: listening on IPv6 TCP port %d\n", 1081);
-
-        if(!IS_FD_USED(server_v4) && !IS_FD_USED(server_v6)) {
-        fprintf(stderr, "Unable to parse socks server IP\n");
-        goto finally;
-    }
-
-    if(!IS_FD_USED(monitor_v4) && !IS_FD_USED(monitor_v6)) {
-        fprintf(stderr, "Unable to parse monitor server IP\n");
-        goto finally;
-    }
-
-    // registrar sigterm es útil para terminar el programa normalmente.
+ 
+        // registrar sigterm es útil para terminar el programa normalmente.
     // esto ayuda mucho en herramientas como valgrind.
     signal(SIGTERM, sigterm_handler);
     signal(SIGINT,  sigterm_handler);
         if(IS_FD_USED(server_v4) && (selector_fd_set_nio(server_v4) == -1)){
-        err_msg = "getting socks server ipv4 socket flags";
+        err_msg = "getting pop3 server ipv4 socket flags";
         goto finally;
     }
 
     if(IS_FD_USED(server_v6) && (selector_fd_set_nio(server_v6) == -1)) {
-        err_msg = "getting socks server ipv6 socket flags";
+        err_msg = "getting pop3 server ipv6 socket flags";
         goto finally;
     }
 
@@ -255,7 +245,6 @@ finally:
 static int
 create_socket(sa_family_t family) {
     const int s = socket(family, SOCK_STREAM, IPPROTO_TCP);
-    printf("Server socket is :%d\n",s);
     if (s < 0) {
         fprintf(stderr, "Unable to create socket\n");
         return -1;
@@ -287,7 +276,6 @@ static int
 bind_ipv4_socket(int bind_address, unsigned port) {
     const int server = create_socket(AF_INET);
 
-    printf("Socket file descriptor is %d\n",server);
 
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
@@ -299,7 +287,6 @@ bind_ipv4_socket(int bind_address, unsigned port) {
         printf("Error in bind\n");
         return -1;
     }
-    printf("Server file descriptor is %d\n",server);
     return server;
 }
 

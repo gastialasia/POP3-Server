@@ -1,0 +1,87 @@
+
+Introducion
+Este es un protoclo binario, no orientado a conexion y que corre sobre TCP.
+Todos los caracteres aceptados por este protocolo son ASCII del alfabeto ingles.
+
+Terminologia
+TerminologíaLas palabras clave "DEBE", "NO DEBE", "OBLIGATORIO", "DEBERÁ", "NO
+DEBERÁ", "DEBERÍA", "NO DEBERÍA", "RECOMENDADO", "PUEDE" y "OPCIONAL"
+en este documento serán interpretadas como se describe en el
+RFC 2119[RFC2119].
+
+Request
+    VER | TOKEN | TIPO | TARGET | DLEN | DATA
+    1       16      1        1       2      1 to 65535
+VERSIÓN:
+Este campo DEBE ser X' 01' .
+TOKEN: Este campo DEBE ser un código de 16 caracteres usado para acceder al server de monitoreo.
+TIPO:
+    X'00' GET
+    X'01' CONFIG
+TARGET:
+GET
+    X'00'  cantidad de conexiones históricas
+    X'01'  cantidad de conexiones concurrentes
+    X'02'  cantidad de bytes transferidos
+CONFIG
+    X'00'  Configuracion of Maildir
+    X'01'  Configuracion buffer size
+    X'02'  agregar usuario admin
+    X'03'  borrar usuarios admin
+    X'04'  agregar usuario pop3
+    X'05' borar usuario de pop3
+DLEN: cantidad de bytes presentes en la sección DATA. Para el método GET, este campo DEBERÍA ser X'01' .
+DATA:
+    GET
+        Este campo DEBERÍA ser X'00' , pero NO DEBERÍA ser leído por el servidor.
+    CONFIG
+        maildir:
+            <nuevo path>
+        Agregar usuario del pop3
+            <usuario>X'00'<contraseña>
+        Borrar usuario pop3
+            <usuario>
+        Agregar usuario admin
+            <usuario>X'00'<token>
+        Borrar usuario admin
+            <usuario>
+
+Response
+    STATUS | DLEN | DATA
+      1       2      1 to 65535
+
+STATUS
+    X'00': OK
+    X'01': Version Invalida
+    X'02': Tipo Invalido
+    X'03': Target Invalido
+    X'04': Data Invalida
+    X'05': Error de Autentificaion
+    X'06': Server Error
+
+DATA
+    X'00': Entero sin signo
+    X'01': Entero sin signo
+    X'02': Entero sin Signo
+
+ Para el tipo config o en caso de error los campos DLEN y DATA DEBERIAN ser X'01' y X'00'
+ y NO DEBERIAN ser leidos por el cliente.
+
+ Una vez enviada la respuesta el servidor DEBE cerra la conexion.
+
+Ejemplos
+Get conexiones historicas X'00'
+request
+  VER |         TOKEN        | TIPO   | TARGET | DLEN | DATA
+ X'01    "123456789abcdef1"     X'00'          X'00'   X'01'  X'00'
+Response
+ STATUS | DLEN | DATA
+  X'00'   X'02'  X'100'
+
+Config maildir X'00'
+ request
+ VER |         TOKEN        | TIPO   | TARGET | DLEN |     DATA
+ X'01    "123456789abcdef1"     X'01'    X'00'   X'11'  "path/a/algo"
+ response
+  STATUS | DLEN | DATA
+  X'00'   X'01'  X'00'
