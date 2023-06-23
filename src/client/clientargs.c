@@ -63,8 +63,7 @@ port_check(const char* src, struct sockaddr_in *sin4, struct sockaddr_in6 *sin6,
     }
 }
 
-static size_t
-string_check(const char *src, char *dest, char* field_name, size_t max_len, char* progname){
+static size_t string_check(const char *src, char *dest, char* field_name, size_t max_len, char* progname){
     size_t str_len;
     if((str_len = strlen(src)) > max_len){
         fprintf(stderr, "%s: invalid username length (%zu), should be of at most %zu characters.\n", progname, str_len, max_len);
@@ -74,8 +73,30 @@ string_check(const char *src, char *dest, char* field_name, size_t max_len, char
     return str_len;
 }
 
-static size_t
-username_with_token(char *src, struct add_admin_user *admin_params, char *progname){
+static size_t username_with_pass(char *src, struct add_pop3_user *user_params, char *progname){
+    size_t str_len;
+    char *separator = strchr(src, ':');
+
+    if(separator == NULL) {
+        fprintf(stderr, "%s: missing password for user %s.\n", progname, src);
+        exit(1);
+    } else if(src[0] == ':') {
+        fprintf(stderr, "%s: missing username for password %s.\n", progname, separator + 1);
+        exit(1);
+    }
+
+    char *username = strtok(src, ":");
+    char *password = separator + 1;
+
+    str_len = string_check(username, user_params->user, "username", USERNAME_SIZE, progname);
+    user_params->separator = 0;
+    str_len++;
+    str_len += string_check(password, user_params->pass, "password", PASSWORD_SIZE, progname);
+
+    return str_len;
+}
+
+static size_t username_with_token(char *src, struct add_admin_user *admin_params, char *progname){
     size_t str_len;
     char *finish_user = strchr(src, ':');
 
@@ -110,6 +131,7 @@ usage(const char *progname) {
         "-U <user:token>     agrega un usuario administrador con el nombre y token indicados.\n"
         "-d <user>           borra el usuario del servidor pop3 con el nombre indicado.\n"
         "-D <user>           borra el usuario administrador con el nombre indicado.\n"
+        "-m                  cambia el maildir del servidor al pedido.\n"
         "-v                  imprime la versión del programa y termina.\n"
         "\n",
         progname);
@@ -177,12 +199,25 @@ size_t parse_args(const int argc, char **argv, struct client_request_args *args,
                 args[req_idx].method = config;
                 args[req_idx].target.config_type = config_maildir;
                 args[req_idx].dlen = string_check(optarg, args[req_idx].data.path, "path", MAX_LEN, argv[0]);
+            case 'u':
+                // Adds pop3 user
+                args[req_idx].method = config;
+                args[req_idx].target.config_type = add_pop3_user;
+                args[req_idx].dlen = username_with_pass(optarg, &args[req_idx].data.add_pop3_user_params, argv[0]);
+                break;
+            case 'd':
+                // Deletes pop3 user
+                args[req_idx].method = config;
+                args[req_idx].target.config_type = del_pop3_user;
+                args[req_idx].dlen = string_check(optarg, args[req_idx].data.user, "username", USERNAME_SIZE, argv[0]);
+                break;
                default:
                 // no deberia llegar aca
                 break;
         }
     if(optind == argc){
         fprintf(stderr, "%s: missing token for client request.\n", argv[0]);
+        *ip_version = ip_check(argv[optind], sin4,sin6,argv[0]);
         exit(1);
     }
 
@@ -195,7 +230,7 @@ size_t parse_args(const int argc, char **argv, struct client_request_args *args,
                 token_check(argv[optind], token, argv[0]);
                 break;
             case 1:
-                *ip_version = ip_check(argv[optind], sin4, sin6, argv[0]);
+ //               *ip_version = ip_check(argv[optind], sin4, sin6, argv[0]);
                 break;
             case 2:
                 port_check(argv[optind], sin4, sin6, ip_version, argv[0]);

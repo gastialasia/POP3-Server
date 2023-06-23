@@ -43,6 +43,17 @@ static void serialize_config_data(struct client_request_args *args, char *buffer
             memcpy(FIELD_DATA(buffer) + username_len + 1, args->data.add_admin_user_params.token, extra_param_len);
 
             break;
+        case add_pop3_user:
+            username_len = strlen(args->data.add_pop3_user_params.user);
+            memcpy(FIELD_DATA(buffer), args->data.add_pop3_user_params.user, username_len);
+
+            buffer[FIELD_DATA_INDEX + username_len] = args->data.add_pop3_user_params.separator;
+
+            extra_param_len = strlen(args->data.add_pop3_user_params.pass);
+            memcpy(FIELD_DATA(buffer) + username_len + 1, args->data.add_pop3_user_params.pass, extra_param_len);
+
+            break;
+        case del_pop3_user:
         case del_admin_user:
             memcpy(FIELD_DATA(buffer), args->data.user, args->dlen);
             break;

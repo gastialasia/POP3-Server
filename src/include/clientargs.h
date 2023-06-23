@@ -12,7 +12,7 @@
 #define DATA_SIZE                   65535
 #define TOKEN_SIZE                  16
 #define USERNAME_SIZE               5
-#define PASSWORD_SIZE               0xFF
+#define PASSWORD_SIZE               16
 #define MAX_LEN                     255
 
 #define TOKEN_ENV_VAR_NAME          "MONITOR_TOKEN"
@@ -32,7 +32,9 @@ enum config_type {
     config_maildir      = 0,
     config_buf_size     = 1,
     add_admin_user      = 2,
-    del_admin_user      = 3
+    del_admin_user      = 3,
+    add_pop3_user       = 4,
+    del_pop3_user       = 5,
 };
 
 union target {
@@ -47,10 +49,17 @@ struct add_admin_user {
     char        token[TOKEN_SIZE];
 };
 
+struct add_pop3_user {
+    char        user[USERNAME_SIZE];
+    char        separator;
+    char        pass[PASSWORD_SIZE];
+};
+
 union data {
     uint8_t                         optional_data;          // To send 0 according to RFC
     char                            user[USERNAME_SIZE];
     char                            path[MAX_LEN];
+     struct add_pop3_user    add_pop3_user_params;
     struct add_admin_user    add_admin_user_params;
 };
 

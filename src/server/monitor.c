@@ -196,8 +196,57 @@ enum monitor_state parse_data(struct monitor_parser *p, uint8_t c){
             }
 
             break;
+        case monitor_config_add_pop3:
+            // Si el primer caracter es 0 directamente tiro error ya que el usuario no puede ser vacio
+            if (p->read == 0 && c == 0) {
+                ret = monitor_invalid_data;
+                break;
+            }
+
+            if (IS_ALNUM(c)) {
+                if (p->finish_user == 0) {
+                    p->monitor->data.pop3_to_add.user[p->read++] = c;
+                } else {
+                    p->monitor->data.pop3_to_add.pass[p->read - username_len] = c;
+                    p->read++;
+                }
+                ret = monitor_data;
+            } else if (c == 0 && p->finish_user == 0) { // primer separador \0 pongo el null terminated en el username
+                p->monitor->data.pop3_to_add.user[p->read++] = c;
+                p->finish_user = 1;
+                username_len = p->read;
+                ret = monitor_data;
+            } else { // Si no es alfanumerico ni fue el primer 0 separador entonces no es un dato valido
+                ret = monitor_invalid_data;
+                break;
+            }
+
+            if (p->read >= p->len) {
+                p->monitor->data.pop3_to_add.pass[p->read] = 0; // null terminated para password
+                ret = monitor_finish;
+                p->finish_user = 0;
+                break;
+            }
+
+            break;
 
         case monitor_config_remove_admin:
+            if (IS_ALNUM(c)) {
+                p->monitor->data.user_to_del[p->read++] = c;
+                ret = monitor_data;
+            } else {
+                ret = monitor_invalid_data;
+                break;
+            }
+
+            if (p->read >= p->len) {
+                p->monitor->data.user_to_del[p->read] = 0; // null terminated para username
+                ret = monitor_finish;
+                break;
+            }
+
+            break;
+        case monitor_config_remove_pop3:
             if (IS_ALNUM(c)) {
                 p->monitor->data.user_to_del[p->read++] = c;
                 ret = monitor_data;

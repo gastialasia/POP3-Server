@@ -337,6 +337,16 @@ static void monitor_action(struct selector_key * key, struct monitor_st *d){
               d->status = monitor_status_success;
               break;
           }
+          case monitor_config_add_pop3: {
+            // error_type = add_new_pop3(d->parser.monitor->data.pop3_to_add.user,d->parser.monitor->data.pop3_to_add.pass);
+             d->status = monitor_status_success;
+              break;
+          }
+          case monitor_config_remove_pop3: {
+            //  error_type = remove_pop3(d->parser.monitor->data.user_to_del);
+              d->status = monitor_status_success;
+              break;
+          }
           default: {
               d->status = monitor_status_no_such_method;
           }

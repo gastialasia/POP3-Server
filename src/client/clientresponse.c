@@ -26,17 +26,22 @@ void handle_get_ok_status(struct client_request_args arg, uint8_t *buf, uint8_t 
 void handle_config_ok_status(struct client_request_args arg) {
     switch (arg.target.config_type) {
         case config_maildir:
-            printf("El  nuevo path es: '%s' is now added in the server\n", arg.data.path);
+            printf("The New Path is: '%s'\n", arg.data.path);
             break;
         case add_admin_user:
             printf("The admin: '%s' is now added in the server\n", arg.data.add_admin_user_params.user);
             break;
         case del_admin_user:
-            printf("The admin: '%s' is now deleted in the server\n", arg.data.add_admin_user_params.user);
+            printf("The admin: '%s' is now deleted from the server\n", arg.data.add_admin_user_params.user);
+            break;
+        case add_pop3_user:
+            printf("The new user: '%s' is now added in the server\n", arg.data.add_admin_user_params.user);
+            break;
+         case del_pop3_user:
+            printf("The user: '%s' is now deleted from the server\n", arg.data.add_admin_user_params.user);
             break;
         default:
             //no deberia caer aca
-            printf("Cai en default en clientresponse\n");
         break;
     }
 }
@@ -62,6 +67,12 @@ void handle_error_response (struct client_request_args *args, enum monitor_resp_
                     break;
                 case del_admin_user:
                     printf("Error deleting the admin, admin name should be alphanumeric, admin does not exist or is default admin!\n");
+                    break;
+                case add_pop3_user:
+                    printf("Error adding the user, user and password should be alphanumeric or user already exist!\n");
+                    break;
+                case del_pop3_user:
+                    printf("Error deleting the user, user name should be alphanumeric\n");
                     break;
                 default:
                     printf("The data of the request you have sent is incorrect!\n");

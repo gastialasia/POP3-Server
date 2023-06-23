@@ -7,7 +7,7 @@
 #define MAX_NAME 5
 #define TOKEN_SIZE 16
 #define MAX_PATH 255
-
+#define MAX_PASS_LEN 16
 
 
 enum monitor_state {
@@ -58,6 +58,8 @@ enum monitor_config_type{
   monitor_config_buf_size     = 0x01,
   monitor_config_add_admin    = 0x02,
   monitor_config_remove_admin = 0x03,
+  monitor_config_add_pop3     = 0x04,
+  monitor_config_remove_pop3  = 0x05
   //se podrian agregar mas cosas
 };
 
@@ -73,11 +75,17 @@ struct add_admin{
   char      token[TOKEN_SIZE];
 };
 
+struct add_pop3 {
+    char        user[MAX_NAME];
+    char        pass[MAX_PASS_LEN];
+};
+
 union data{
   char             user_to_del[MAX_NAME];//se va a usar para eliminar a un admin
   char             change_maildir[MAX_PATH];
   char             new_size[6]; //5 + \0
   struct add_admin admin_to_add;
+  struct add_pop3 pop3_to_add;
 };
 
 union data_len {
