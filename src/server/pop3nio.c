@@ -217,7 +217,9 @@ static void pop3_destroy(struct pop3 *s)
     free(s->dele_flags); // Agregue el free para los flags
     free(s->credentials);
     parser_destroy(s->parser);
-    printf("A client has closed it's connection from fd: %d\n", s->client_fd);
+    time_t t;
+    time(&t);
+    printf("%sA user has been disconnected\n", ctime(&t));
     remove_client(s->client_fd);
     connections--;
 }
@@ -609,7 +611,7 @@ static struct pop3 *pop3_new(int client_fd)
     }
 
     ret->client_fd = client_fd;
-    printf("A user has been connected with fd: %d\n", client_fd);
+    
     ret->client_addr_len = sizeof(ret->client_addr);
 
     ret->stm.initial = AUTH;
@@ -636,6 +638,11 @@ void pop3_passive_accept(struct selector_key *key)
     struct pop3 *state = NULL;
 
     const int client = accept(key->fd, (struct sockaddr *)&client_addr, &client_addr_len);
+
+    time_t t;
+    time(&t);
+    printf("%sA user has been connected\n", ctime(&t));
+
     if (client == -1)
     {
         goto fail;

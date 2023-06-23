@@ -25,6 +25,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
+#include<time.h>
 
 #include "include/selector.h"
 #include "include/pop3nio.h"
@@ -223,10 +224,13 @@ int main(const int argc, const char **argv)
         err_msg = "registering fd";
         goto finally;
     }
+
+    
     for (; !done;)
     {
         err_msg = NULL;
         ss = selector_select(selector);
+
         if (ss != SELECTOR_SUCCESS)
         {
             err_msg = "serving";
