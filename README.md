@@ -1,4 +1,4 @@
-# TP-Protos-1C2023-G7
+# TP-Protos
  Trabajo Practico Especial de Protocolos de Comunicacion - 1C 2023
 
 ## Recursos
